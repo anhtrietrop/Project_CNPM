@@ -6,7 +6,9 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverURL } from "../App"; // Import từ App.js
 // import authRouter from "./routes/auth.routes.js";
+import {} from "react-spinners";
 import axios from "axios";
+
 function SignIn() {
   const primaryColor = "#00BFFF";
   //   const hoverColor = "#e64323";
@@ -19,7 +21,10 @@ function SignIn() {
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
   const handleSignIn = async () => {
+    setLoading(true);
     try {
       const result = await axios.post(
         `${serverURL}/api/auth/signin`,
@@ -27,10 +32,11 @@ function SignIn() {
         { withCredentials: true }
       );
       console.log("Signin success:", result.data);
+      setErr("");
+      setLoading(false);
     } catch (error) {
-      // Xem thông báo lỗi cụ thể từ backend
-      console.log("Signin error response:", error.response?.data);
-      console.log("Email/password used:", { email, password });
+      setErr(error?.response?.data?.message);
+      setLoading(false);
     }
   };
   return (
@@ -64,6 +70,7 @@ function SignIn() {
             style={{ border: "1px solid ${borderColor}" }}
             onChange={(e) => setEmail(e.target.value)}
             value={email}
+            required
           />
         </div>
 
@@ -83,6 +90,7 @@ function SignIn() {
               style={{ border: "1px solid ${borderColor}" }}
               onChange={(e) => setPassword(e.target.value)}
               value={password}
+              required
             />
 
             <button
@@ -104,16 +112,11 @@ function SignIn() {
             "w-full font-semibold py-2 rounded-lg transition duration-200 bg-[#00BFFF] text-white hover:bg-[#00BFFF] cursor-pointer"
           }
           onClick={handleSignIn}
+          disabled={loading}
         >
-          Sign In
+          {loading ? <clipLoader color="white" size={20} /> : "Sign In"}
         </button>
-        <button
-          className="w-full mt-4 flex items-center justify-center gap-2 font-semibold py-2 rounded-lg transition duration-200 border-gray-400 hover:bg-gray-100 cursor-pointer"
-          style={{ border: `1px solid ${borderColor}` }}
-        >
-          <FcGoogle size={30} />
-          <span> Sign In with Google</span>
-        </button>
+        <p className="text-red-500 text-center my-[10px]">*{err}</p>
         <p
           className="text-center mt-2 cursor-pointer"
           onClick={() => navigate("/signup")}
