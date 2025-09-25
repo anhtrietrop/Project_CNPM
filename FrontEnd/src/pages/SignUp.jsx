@@ -5,8 +5,10 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverURL } from "../App"; // Import từ App.js
+import {} from "react-spinners";
 // import authRouter from "./routes/auth.routes.js";
 import axios from "axios";
+
 function SignUp() {
   const primaryColor = "#00BFFF";
   //   const hoverColor = "#e64323";
@@ -19,7 +21,10 @@ function SignUp() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
   const handleSignUp = async () => {
+    setLoading(true);
     try {
       const result = await axios.post(
         `${serverURL}/api/auth/signup`,
@@ -32,11 +37,15 @@ function SignUp() {
         },
         { withCredentials: true }
       );
+      setErr("");
       console.log(result);
+      setLoading(false);
     } catch (error) {
-      console.log(error);
+      setErr(error?.response?.data?.message);
+      setLoading(false);
     }
   };
+
   return (
     <div
       className="min-h-screen w-full flex items-center justify-center p-4"
@@ -68,6 +77,7 @@ function SignUp() {
             style={{ border: "1px solid ${borderColor}" }}
             onChange={(e) => setFullname(e.target.value)}
             value={fullName}
+            required
           />
         </div>
         {/* email */}
@@ -85,6 +95,7 @@ function SignUp() {
             style={{ border: "1px solid ${borderColor}" }}
             onChange={(e) => setEmail(e.target.value)}
             value={email}
+            required
           />
         </div>
         {/* mobile */}
@@ -102,6 +113,7 @@ function SignUp() {
             style={{ border: "1px solid ${borderColor}" }}
             onChange={(e) => setMobile(e.target.value)}
             value={mobile}
+            required
           />
         </div>
         {/* password */}
@@ -120,6 +132,7 @@ function SignUp() {
               style={{ border: "1px solid ${borderColor}" }}
               onChange={(e) => setPassword(e.target.value)}
               value={password}
+              required
             />
 
             <button
@@ -159,16 +172,11 @@ function SignUp() {
             "w-full font-semibold py-2 rounded-lg transition duration-200 bg-[#00BFFF] text-white hover:bg-[#00BFFF] cursor-pointer"
           }
           onClick={handleSignUp}
+          disabled={loading}
         >
-          Sign Up
+          {loading ? <clipLoader color="white" size={20} /> : "Sign Up"}
         </button>
-        <button
-          className="w-full mt-4 flex items-center justify-center gap-2 font-semibold py-2 rounded-lg transition duration-200 border-gray-400 hover:bg-gray-100 cursor-pointer"
-          style={{ border: `1px solid ${borderColor}` }}
-        >
-          <FcGoogle size={30} />
-          <span> Sign up with Google</span>
-        </button>
+        <p className="text-red-500 text-center my-[10px]">*{err}</p>
         <p
           className="text-center mt-2 cursor-pointer"
           onClick={() => navigate("/signin")}
