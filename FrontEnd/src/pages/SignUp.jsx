@@ -6,8 +6,10 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverURL } from "../App"; // Import từ App.js
 import {} from "react-spinners";
-// import authRouter from "./routes/auth.routes.js";
+
 import axios from "axios";
+import { setUserData } from "../redux/userSlice";
+import { useDispatch } from "react-redux";
 
 function SignUp() {
   const primaryColor = "#00BFFF";
@@ -23,6 +25,7 @@ function SignUp() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
   const handleSignUp = async () => {
     setLoading(true);
     try {
@@ -38,7 +41,7 @@ function SignUp() {
         { withCredentials: true }
       );
       setErr("");
-      console.log(result);
+      dispatch(setUserData(result.data));
       setLoading(false);
     } catch (error) {
       setErr(error?.response?.data?.message);
