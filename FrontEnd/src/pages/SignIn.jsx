@@ -8,6 +8,8 @@ import { serverURL } from "../App"; // Import từ App.js
 // import authRouter from "./routes/auth.routes.js";
 import {} from "react-spinners";
 import axios from "axios";
+import { setUserData } from "../redux/userSlice"; // Adjust the path as needed
+import { useDispatch } from "react-redux";
 
 function SignIn() {
   const primaryColor = "#00BFFF";
@@ -22,6 +24,7 @@ function SignIn() {
 
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const handleSignIn = async () => {
     setLoading(true);
@@ -31,7 +34,7 @@ function SignIn() {
         { email, password },
         { withCredentials: true }
       );
-      console.log("Signin success:", result.data);
+      dispatch(setUserData(result.data));
       setErr("");
       setLoading(false);
     } catch (error) {
