@@ -8,15 +8,17 @@ import useGetCurrentUser from "./hooks/useGetCurrentUser.jsx";
 import { useSelector } from "react-redux";
 import useGetCity from "./hooks/useGetCity.jsx";
 import useGetMyShop from "./hooks/useGetMyShop.jsx";
+import CreateEditShop from "./pages/CreateEditShop.jsx";
+import AddItem from "./pages/AddItem.jsx";
+import EditItem from "./pages/EditItem.jsx"; // ✅ đường dẫn tương đối
 
 export const serverURL = "http://localhost:8000";
 
 function App() {
   useGetCurrentUser();
+  const { userData } = useSelector((state) => state.user);
   useGetCity();
   useGetMyShop();
-  const { userData } = useSelector((state) => state.user);
-
   return (
     <Routes>
       <Route
@@ -34,6 +36,18 @@ function App() {
       <Route
         path="/"
         element={userData ? <Home /> : <Navigate to={"/signin"} />}
+      />
+      <Route
+        path="/create-edit-shop"
+        element={userData ? <CreateEditShop /> : <Navigate to={"/signin"} />}
+      />
+      <Route
+        path="/add-item"
+        element={userData ? <AddItem /> : <Navigate to={"/signin"} />}
+      />
+      <Route
+        path="/edit-item/:itemId"
+        element={userData ? <EditItem /> : <Navigate to={"/signin"} />}
       />
     </Routes>
   );
