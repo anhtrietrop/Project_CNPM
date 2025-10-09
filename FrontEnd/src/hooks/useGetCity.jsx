@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { setCity, setUserData } from "../redux/userSlice.js";
+import {
+  setCurrentAddress,
+  setCurrentCity,
+  setCurrentState,
+} from "../redux/userSlice.js";
 
 function useGetCity() {
   const dispatch = useDispatch();
@@ -17,12 +21,43 @@ function useGetCity() {
         `https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`
       );
 
-      // Dispatch city
-      dispatch(setCity(result?.data?.results[0].state));
+      const props = result?.data?.results?.[0] || {};
 
-      // Nếu muốn dispatch toàn bộ userData
+      // city: ưu tiên city, nếu null thì lấy state
+      const city = props.city || props.state || null;
+
+      // county: quận / huyện
+      const county = props.county || null;
+
+      // address: gộp address_line1 và address_line2
+      const address_line1 = props.address_line1 || "";
+      const address_line2 = props.address_line2 || "";
+      console.log("Address Line 1:", address_line1);
+      console.log("Address Line 2:", address_line2);
+      console.log("Full props:", props);
+      
+      // Ưu tiên dùng formatted address (địa chỉ đầy đủ)
+      let address = props.formatted || "";
+      
+      // Nếu không có formatted, thì gộp address_line1 và address_line2
+      if (!address) {
+        if (address_line1 && address_line2) {
+          address = `${address_line1}, ${address_line2}`;
+        } else if (address_line1) {
+          address = address_line1;
+        } else if (address_line2) {
+          address = address_line2;
+        }
+      }
+      
+      console.log("Final address:", address);
+
+      // Dispatch vào redux
+      dispatch(setCurrentCity(city));
+      dispatch(setCurrentState(county)); // state ở Redux của bạn thực chất đang giữ county
+      dispatch(setCurrentAddress(address));
     });
-  }, [userData]); // Thêm dependencies
+  }, [userData, apiKey, dispatch]);
 }
 
 export default useGetCity;

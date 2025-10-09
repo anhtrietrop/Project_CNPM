@@ -9,11 +9,13 @@ import { serverURL } from "../App";
 import { setUserData } from "../redux/userSlice";
 import { FaPlus } from "react-icons/fa6";
 import { TbReceipt2 } from "react-icons/tb";
+import { useNavigate } from "react-router-dom";
 function Nav() {
-  const { userData, city } = useSelector((state) => state.user);
+  const { userData, currentCity } = useSelector((state) => state.user);
   const { myShopData } = useSelector((state) => state.owner);
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const navigation = useNavigate();
   const dispatch = useDispatch();
   const handleLogOut = async () => {
     try {
@@ -31,7 +33,7 @@ function Nav() {
         <div className="w-[90%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] flex fixed top-[80px] left-[5%] ">
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className=" text-[#3399df]" />{" "}
-            <div className="w-[80%] truncate text-gray-600">HCM City</div>
+            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
           </div>
           <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#3399df]" />
@@ -48,7 +50,7 @@ function Nav() {
         <div className="md:w-[60%] lg:w-[40%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] hidden md:flex">
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className=" text-[#3399df]" />{" "}
-            <div className="w-[80%] truncate text-gray-600">{city}</div>
+            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
           </div>
           <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#3399df]" />
@@ -80,11 +82,17 @@ function Nav() {
           <>
             {myShopData && (
               <>
-                <button className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#3399df]/10 text-[#3399df]">
+                <button
+                  className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#3399df]/10 text-[#3399df]"
+                  onClick={() => navigation("/add-item")}
+                >
                   <FaPlus size={20} />
                   <span>Add Food Item</span>
                 </button>
-                <button className="md:hidden flex items-center p-2 cursor-pointer rounded-full bg-[#3399df]/10 text-[#3399df]">
+                <button
+                  className="md:hidden flex items-center p-2 cursor-pointer rounded-full bg-[#3399df]/10 text-[#3399df]"
+                  onClick={() => navigation("/add-item")}
+                >
                   <FaPlus size={20} />
                 </button>
               </>
@@ -130,9 +138,12 @@ function Nav() {
             <div className=" text-[17px] font-semibold">
               {userData.fullName}
             </div>
-            <div className=" md:hidden text-[#3399df] font-semibold cursor-pointer">
-              My Orders
-            </div>
+            {userData.role == "user" && (
+              <div className=" md:hidden text-[#3399df] font-semibold cursor-pointer">
+                My Orders
+              </div>
+            )}
+
             <div
               className="text-[#3399df] font-semibold cursor-pointer"
               onClick={handleLogOut}

@@ -6,7 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverURL } from "../App"; // Import từ App.js
 // import authRouter from "./routes/auth.routes.js";
-import {} from "react-spinners";
+import { ClipLoader } from "react-spinners";
 import axios from "axios";
 import { setUserData } from "../redux/userSlice"; // Adjust the path as needed
 import { useDispatch } from "react-redux";
@@ -117,7 +117,7 @@ function SignIn() {
           onClick={handleSignIn}
           disabled={loading}
         >
-          {loading ? <clipLoader color="white" size={20} /> : "Sign In"}
+          {loading ? <ClipLoader color="white" size={20} /> : "Sign In"}
         </button>
         <p className="text-red-500 text-center my-[10px]">*{err}</p>
         <p

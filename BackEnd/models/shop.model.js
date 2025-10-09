@@ -7,7 +7,7 @@ const shopSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      require: true,
+      require: false,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
