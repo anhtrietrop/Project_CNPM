@@ -47,9 +47,6 @@ function OwnerItemCard({ data }) {
           <p className="text-sm text-gray-600">
             <span className="font-medium">Category:</span> {data.category}
           </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">Food Type:</span> {data.foodType}
-          </p>
         </div>
         <div className="flex justify-between items-center mt-2">
           <div className="text-lg font-bold text-red-500">{data.price}</div>

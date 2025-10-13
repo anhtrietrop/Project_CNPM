@@ -10,13 +10,19 @@ import { setUserData } from "../redux/userSlice";
 import { FaPlus } from "react-icons/fa6";
 import { TbReceipt2 } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
+import Cart from "./Cart.jsx";
+import useCart from "../hooks/useCart.jsx";
+import Search from "./Search.jsx";
 function Nav() {
   const { userData, currentCity } = useSelector((state) => state.user);
   const { myShopData } = useSelector((state) => state.owner);
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const navigation = useNavigate();
   const dispatch = useDispatch();
+  const { cart } = useCart();
   const handleLogOut = async () => {
     try {
       await axios.get(`${serverURL}/api/auth/signout`, {
@@ -58,6 +64,8 @@ function Nav() {
               type="text"
               placeholder={"What are you in the mood to eat? "}
               className="px-[10px] text-gray-700 outline-0 w-full"
+              onClick={() => setShowSearchModal(true)}
+              readOnly
             />
           </div>
         </div>
@@ -75,7 +83,7 @@ function Nav() {
             <IoIosSearch
               size={25}
               className="text-[#3399df] md:hidden  "
-              onClick={() => setShowSearch(true)}
+              onClick={() => setShowSearchModal(true)}
             />
           ))}
         {userData.role == "owner" ? (
@@ -114,10 +122,10 @@ function Nav() {
           </>
         ) : (
           <>
-            <div className="relative cursor-pointer">
+            <div className="relative cursor-pointer" onClick={() => setShowCart(true)}>
               <FiShoppingCart size={25} className="text-[#3399df]" />
-              <span className=" absolute right-[-9px] top-[-12px] text-[#3399df]">
-                0
+              <span className="absolute right-[-9px] top-[-12px] text-[#3399df] bg-white rounded-full px-1 text-xs font-bold">
+                {cart?.items?.length || 0}
               </span>
             </div>
 
@@ -153,6 +161,12 @@ function Nav() {
           </div>
         )}
       </div>
+      
+      {/* Cart Modal */}
+      <Cart isOpen={showCart} onClose={() => setShowCart(false)} />
+      
+      {/* Search Modal */}
+      <Search isOpen={showSearchModal} onClose={() => setShowSearchModal(false)} />
     </div>
   );
 }
