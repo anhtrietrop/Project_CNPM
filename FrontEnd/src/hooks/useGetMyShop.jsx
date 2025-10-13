@@ -15,9 +15,13 @@ function useGetMyShop() {
         const result = await axios.get(`${serverURL}/api/shop/get-my`, {
           withCredentials: true,
         });
-        dispatch(setMyShopData(result.data));
+        dispatch(setMyShopData(result.data)); // result.data có thể là null nếu chưa có shop
       } catch (error) {
-        console.log(error);
+        console.log("Error fetching shop:", error);
+        // Nếu lỗi 404, set shop data là null để hiển thị form tạo shop
+        if (error.response?.status === 404) {
+          dispatch(setMyShopData(null));
+        }
       }
     };
     fetchShop();

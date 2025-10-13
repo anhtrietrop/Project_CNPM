@@ -57,10 +57,27 @@ export const getMyShop = async (req, res) => {
         options: { sort: { updatedAt: -1 } },
       });
     if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
+      return res.status(200).json(null); // Trả về null thay vì 404
     }
     return res.status(200).json(shop);
   } catch (error) {
     return res.status(500).json({ message: `get my shop error  ${error}` });
+  }
+};
+
+export const getShopByCity = async (req, res) => {
+  try {
+    const { city } = req.params;
+    const shops = await Shop.find({
+      city: { $regex: new RegExp(city, "i") },
+    }).populate("items");
+    if (!shops) {
+      return res.status(404).json({ message: "No shops found in this city" });
+    }
+    return res.status(200).json(shops);
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: `get shop by city error  ${error}` });
   }
 };

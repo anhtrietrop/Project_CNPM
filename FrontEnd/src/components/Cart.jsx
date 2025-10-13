@@ -1,0 +1,190 @@
+import React, { useState } from "react";
+import { FaTrash, FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
+import useCart from "../hooks/useCart.jsx";
+
+function Cart({ isOpen, onClose }) {
+  const { cart, loading, removeFromCart, updateCartItem, clearCart } = useCart();
+  const [updatingItems, setUpdatingItems] = useState(new Set());
+
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    if (newQuantity < 1) {
+      await removeFromCart(itemId);
+      return;
+    }
+
+    try {
+      setUpdatingItems(prev => new Set(prev).add(itemId));
+      await updateCartItem(itemId, newQuantity);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+    } finally {
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleRemoveItem = async (itemId) => {
+    try {
+      setUpdatingItems(prev => new Set(prev).add(itemId));
+      await removeFromCart(itemId);
+    } catch (error) {
+      console.error("Error removing item:", error);
+    } finally {
+      setUpdatingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (window.confirm("Are you sure you want to clear your cart?")) {
+      try {
+        await clearCart();
+      } catch (error) {
+        console.error("Error clearing cart:", error);
+      }
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <FaShoppingCart />
+            Shopping Cart
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Cart Content */}
+        <div className="p-4 overflow-y-auto max-h-[60vh]">
+          {loading && !cart ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3399df]"></div>
+            </div>
+          ) : !cart?.items || cart.items.length === 0 ? (
+            <div className="text-center py-8">
+              <FaShoppingCart className="mx-auto text-4xl text-gray-300 mb-4" />
+              <p className="text-gray-500">Your cart is empty</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {cart.items.map((cartItem) => (
+                <div
+                  key={cartItem.item._id}
+                  className="flex items-center gap-4 p-3 border rounded-lg"
+                >
+                  <img
+                    src={cartItem.item.image}
+                    alt={cartItem.item.name}
+                    className="w-16 h-16 object-cover rounded-lg"
+                    onError={(e) => {
+                      e.target.src = "https://via.placeholder.com/64x64?text=No+Image";
+                    }}
+                  />
+                  
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-800">
+                      {cartItem.item.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {cartItem.item.category} • {cartItem.item.foodType}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      From: {cartItem.item.shop?.name}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleQuantityChange(cartItem.item._id, cartItem.quantity - 1)}
+                      disabled={updatingItems.has(cartItem.item._id)}
+                      className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 disabled:opacity-50"
+                    >
+                      <FaMinus className="text-xs" />
+                    </button>
+                    
+                    <span className="w-8 text-center font-medium">
+                      {cartItem.quantity}
+                    </span>
+                    
+                    <button
+                      onClick={() => handleQuantityChange(cartItem.item._id, cartItem.quantity + 1)}
+                      disabled={updatingItems.has(cartItem.item._id)}
+                      className="bg-[#3399df] text-white p-1 rounded-full hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      <FaPlus className="text-xs" />
+                    </button>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold text-[#3399df]">
+                      ${(cartItem.price * cartItem.quantity).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      ${cartItem.price} each
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleRemoveItem(cartItem.item._id)}
+                    disabled={updatingItems.has(cartItem.item._id)}
+                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {cart?.items && cart.items.length > 0 && (
+          <div className="border-t p-4">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-bold">Total:</span>
+              <span className="text-xl font-bold text-[#3399df]">
+                ${cart.totalAmount?.toFixed(2) || "0.00"}
+              </span>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={handleClearCart}
+                className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Clear Cart
+              </button>
+              <button
+                onClick={() => {
+                  // TODO: Implement checkout
+                  alert("Checkout functionality coming soon!");
+                }}
+                className="flex-1 bg-[#3399df] text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Checkout
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default Cart;

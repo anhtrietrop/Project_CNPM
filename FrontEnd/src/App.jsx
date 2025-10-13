@@ -11,7 +11,7 @@ import useGetMyShop from "./hooks/useGetMyShop.jsx";
 import CreateEditShop from "./pages/CreateEditShop.jsx";
 import AddItem from "./pages/AddItem.jsx";
 import EditItem from "./pages/EditItem.jsx"; // ✅ đường dẫn tương đối
-
+import useGetShopByCity from "./hooks/useGetShopByCity.jsx";
 export const serverURL = "http://localhost:8000";
 
 function App() {
@@ -19,6 +19,7 @@ function App() {
   const { userData } = useSelector((state) => state.user);
   useGetCity();
   useGetMyShop();
+  useGetShopByCity();
   return (
     <Routes>
       <Route

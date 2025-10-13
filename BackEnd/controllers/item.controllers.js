@@ -5,14 +5,30 @@ import Item from "../models/item.model.js";
 export const addItem = async (req, res) => {
   try {
     const { name, category, foodType, price } = req.body;
+
+    // Validation
+    if (!name || !category || !foodType || !price) {
+      return res.status(400).json({ 
+        message: "All fields (name, category, foodType, price) are required" 
+      });
+    }
+
+    if (price < 0) {
+      return res.status(400).json({ 
+        message: "Price must be a positive number" 
+      });
+    }
+
     let image;
     if (req.file) {
       image = await uploadOnCloudinary(req.file.path);
     }
+
     const shop = await Shop.findOne({ owner: req.userId });
     if (!shop) {
-      return res.status(400).json({ message: "shop not found" });
+      return res.status(404).json({ message: "Shop not found" });
     }
+
     const item = await Item.create({
       name,
       category,
@@ -21,6 +37,7 @@ export const addItem = async (req, res) => {
       image,
       shop: shop._id,
     });
+
     shop.items.push(item._id);
     await shop.save();
     await shop.populate("owner");
@@ -31,7 +48,8 @@ export const addItem = async (req, res) => {
 
     return res.status(201).json(shop);
   } catch (error) {
-    return res.status(500).json({ message: `add item error ${error}` });
+    console.error("Add item error:", error);
+    return res.status(500).json({ message: `Add item error: ${error.message}` });
   }
 };
 
@@ -100,5 +118,89 @@ export const deleteItem = async (req, res) => {
     return res.status(200).json(shop);
   } catch (error) {
     return res.status(500).json({ message: `delete item error ${error}` });
+  }
+};
+
+export const getSuggestedItems = async (req, res) => {
+  try {
+    // Lấy 10 items mới nhất từ tất cả shops
+    const items = await Item.find()
+      .populate("shop", "name city")
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    if (!items || items.length === 0) {
+      return res.status(404).json({ message: "No items found" });
+    }
+    
+    return res.status(200).json(items);
+  } catch (error) {
+    return res.status(500).json({ message: `get suggested items error ${error}` });
+  }
+};
+
+// Tìm kiếm items
+export const searchItems = async (req, res) => {
+  try {
+    const { q, category, foodType, minPrice, maxPrice, city } = req.query;
+    
+    let query = {};
+    
+    // Tìm kiếm theo tên
+    if (q) {
+      query.name = { $regex: q, $options: 'i' };
+    }
+    
+    // Lọc theo category
+    if (category) {
+      query.category = category;
+    }
+    
+    // Lọc theo foodType
+    if (foodType) {
+      query.foodType = foodType;
+    }
+    
+    // Lọc theo giá
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+    
+    let items = await Item.find(query)
+      .populate({
+        path: "shop",
+        select: "name city state address"
+      })
+      .sort({ createdAt: -1 });
+    
+    // Lọc theo thành phố nếu có
+    if (city) {
+      items = items.filter(item => 
+        item.shop && item.shop.city.toLowerCase().includes(city.toLowerCase())
+      );
+    }
+    
+    return res.status(200).json(items);
+  } catch (error) {
+    console.error("Search items error:", error);
+    return res.status(500).json({ message: `Search items error: ${error.message}` });
+  }
+};
+
+// Lấy items theo category
+export const getItemsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+    
+    const items = await Item.find({ category })
+      .populate("shop", "name city")
+      .sort({ createdAt: -1 });
+    
+    return res.status(200).json(items);
+  } catch (error) {
+    console.error("Get items by category error:", error);
+    return res.status(500).json({ message: `Get items by category error: ${error.message}` });
   }
 };

@@ -13,6 +13,9 @@ function useGetCity() {
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
 
   useEffect(() => {
+    // Chỉ fetch location khi có userData
+    if (!userData) return;
+    
     navigator.geolocation.getCurrentPosition(async (position) => {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
@@ -32,9 +35,6 @@ function useGetCity() {
       // address: gộp address_line1 và address_line2
       const address_line1 = props.address_line1 || "";
       const address_line2 = props.address_line2 || "";
-      console.log("Address Line 1:", address_line1);
-      console.log("Address Line 2:", address_line2);
-      console.log("Full props:", props);
       
       // Ưu tiên dùng formatted address (địa chỉ đầy đủ)
       let address = props.formatted || "";
@@ -49,8 +49,6 @@ function useGetCity() {
           address = address_line2;
         }
       }
-      
-      console.log("Final address:", address);
 
       // Dispatch vào redux
       dispatch(setCurrentCity(city));

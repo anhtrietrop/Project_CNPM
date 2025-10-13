@@ -18,7 +18,7 @@ const itemSchema = new mongoose.Schema(
       type: String,
       enum: [
         "Burgers",
-        " Sandwiches",
+        "Sandwiches",
         "Fried",
         "Desserts",
         "Drinks",
@@ -32,10 +32,20 @@ const itemSchema = new mongoose.Schema(
       min: 0,
       require: true,
     },
-    foodStyle: {
+    foodType: {
       type: String,
-      enum: ["veg", "non veg"],
+      enum: ["veg", "non-veg"],
       require: true,
+    },
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }
