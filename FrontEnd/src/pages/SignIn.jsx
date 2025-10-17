@@ -29,14 +29,19 @@ function SignIn() {
   const handleSignIn = async () => {
     setLoading(true);
     try {
-      const result = await axios.post(
+      await axios.post(
         `${serverURL}/api/auth/signin`,
         { email, password },
         { withCredentials: true }
       );
-      dispatch(setUserData(result.data));
+      // Fetch full user data after successful signin
+      const userResult = await axios.get(`${serverURL}/api/user/current`, {
+        withCredentials: true,
+      });
+      dispatch(setUserData(userResult.data.user));
       setErr("");
       setLoading(false);
+      navigate("/");
     } catch (error) {
       setErr(error?.response?.data?.message);
       setLoading(false);
