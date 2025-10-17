@@ -9,6 +9,7 @@ const userSlice = createSlice({
     currentAddress: null,
     shopInMyCity: null,
     suggestedItems: null,
+    loading: true, // Thêm loading state
   },
   reducers: {
     setUserData: (state, action) => {
@@ -29,6 +30,9 @@ const userSlice = createSlice({
     setSuggestedItems: (state, action) => {
       state.suggestedItems = action.payload;
     },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
   },
 });
 export const {
@@ -38,5 +42,6 @@ export const {
   setCurrentAddress,
   setShopInMyCity,
   setSuggestedItems,
+  setLoading,
 } = userSlice.actions;
 export default userSlice;

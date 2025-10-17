@@ -163,7 +163,12 @@ function Nav() {
       </div>
       
       {/* Cart Modal */}
-      <Cart isOpen={showCart} onClose={() => setShowCart(false)} />
+      <Cart 
+        key={cart?.items?.length || 0} 
+        isOpen={showCart} 
+        onClose={() => setShowCart(false)} 
+        cart={cart} 
+      />
       
       {/* Search Modal */}
       <Search isOpen={showSearchModal} onClose={() => setShowSearchModal(false)} />

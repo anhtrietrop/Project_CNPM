@@ -3,7 +3,7 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverURL } from "../App";
-import {} from "react-spinners";
+import { ClipLoader } from "react-spinners";
 
 function ForgotPassword() {
   const [step, setStep] = React.useState(1);
@@ -35,17 +35,41 @@ function ForgotPassword() {
   const handleVerifyOtp = async () => {
     try {
       setLoading(true);
+
+      // Validate OTP
+      if (!otp || otp.trim() === "") {
+        setErr("Vui lòng nhập mã OTP");
+        setLoading(false);
+        return;
+      }
+
+      if (otp.length !== 4) {
+        setErr("Mã OTP phải có 4 chữ số");
+        setLoading(false);
+        return;
+      }
+
+      // Log để debug
+      console.log("Email:", email);
+      console.log("OTP:", otp);
+      console.log("OTP type:", typeof otp);
+
       const result = await axios.post(
         `${serverURL}/api/auth/verify-otp`,
-        { email, otp },
+        {
+          email: email.trim(),
+          otp: otp.toString().trim(), // Đảm bảo là string
+        },
         { withCredentials: true }
       );
-      console.log(result);
+
+      console.log("Verify result:", result);
       setErr("");
       setStep(3);
       setLoading(false);
     } catch (error) {
-      setErr(error?.response?.data?.message);
+      console.error("Verify OTP Error:", error.response?.data);
+      setErr(error?.response?.data?.message || "Mã OTP không đúng");
       setLoading(false);
     }
   };
@@ -112,7 +136,7 @@ function ForgotPassword() {
               onClick={handleSendOtp}
               disabled={loading}
             >
-              {loading ? <clipLoader color="white" size={20} /> : "Send OTP"}
+              {loading ? <ClipLoader color="white" size={20} /> : "Send OTP"}
             </button>
           </div>
         )}
@@ -126,7 +150,7 @@ function ForgotPassword() {
                 OTP
               </label>
               <input
-                type="email"
+                type="text"
                 className="w-full border-[1px] border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                 placeholder="Enter your OTP"
                 onChange={(e) => setOtp(e.target.value)}
@@ -141,7 +165,7 @@ function ForgotPassword() {
               onClick={handleVerifyOtp}
               disabled={loading}
             >
-              {loading ? <clipLoader color="white" size={20} /> : "Verify OTP"}
+              {loading ? <ClipLoader color="white" size={20} /> : "Verify OTP"}
             </button>
             <p className="text-red-500 text-center my-[10px]">*{err}</p>
           </div>
@@ -188,7 +212,7 @@ function ForgotPassword() {
               disabled={loading}
             >
               {loading ? (
-                <clipLoader color="white" size={20} />
+                <ClipLoader color="white" size={20} />
               ) : (
                 "Reset Password"
               )}

@@ -68,10 +68,24 @@ export const getMyShop = async (req, res) => {
 export const getShopByCity = async (req, res) => {
   try {
     const { city } = req.params;
-    const shops = await Shop.find({
-      city: { $regex: new RegExp(city, "i") },
-    }).populate("items");
-    if (!shops) {
+    
+    // Tìm kiếm linh hoạt cho Ho Chi Minh
+    let query = {};
+    if (city.toLowerCase().includes("ho chi minh") || city.toLowerCase().includes("hcm")) {
+      // Tìm cả "Ho Chi Minh" và "Ho Chi Minh City"
+      query = {
+        $or: [
+          { city: { $regex: /ho chi minh/i } },
+          { city: { $regex: /hcm/i } }
+        ]
+      };
+    } else {
+      // Tìm kiếm bình thường cho các thành phố khác
+      query = { city: { $regex: new RegExp(city, "i") } };
+    }
+    
+    const shops = await Shop.find(query).populate("items");
+    if (!shops || shops.length === 0) {
       return res.status(404).json({ message: "No shops found in this city" });
     }
     return res.status(200).json(shops);

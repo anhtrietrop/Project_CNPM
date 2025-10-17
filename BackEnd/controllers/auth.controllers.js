@@ -118,19 +118,62 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
-    const user = await User.findOne({ email });
-    if (!user || user.resetOtp != otp || user.otpExpiries < Date.now()) {
-      return res.status(400).json({ message: "Invalid/expries otp" });
+
+    // Validate input
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Email và OTP không được để trống",
+      });
     }
 
-    user.isOtpVerified = true;
-    user.resetOtp = undefined;
-    user.otpExpiries = undefined;
+    // Tìm user
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
 
+    if (!user) {
+      return res.status(400).json({
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    // Log để debug (XÓA sau khi fix xong)
+    console.log("User OTP:", user.resetOtp, typeof user.resetOtp);
+    console.log("Input OTP:", otp, typeof otp);
+    console.log("OTP Expiry:", user.otpExpiries);
+    console.log("Current Time:", Date.now());
+
+    // Kiểm tra OTP
+    if (!user.resetOtp) {
+      return res.status(400).json({
+        message: "Vui lòng yêu cầu gửi OTP mới",
+      });
+    }
+
+    // Convert cả 2 về string để so sánh
+    if (user.resetOtp.toString() !== otp.toString()) {
+      return res.status(400).json({
+        message: "Mã OTP không đúng",
+      });
+    }
+
+    // Kiểm tra hết hạn
+    if (user.otpExpiries < Date.now()) {
+      return res.status(400).json({
+        message: "Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại",
+      });
+    }
+
+    // Verify thành công
+    user.isOtpVerified = true;
     await user.save();
-    return res.status(200).json({ message: "OTP verified successfully" });
+
+    return res.status(200).json({
+      message: "Xác thực OTP thành công",
+    });
   } catch (error) {
-    return res.status(500).json(`verify otp error ${error}`);
+    console.error("Verify OTP Error:", error);
+    return res.status(500).json({
+      message: `Lỗi xác thực OTP: ${error.message}`,
+    });
   }
 };
 
@@ -144,6 +187,8 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     user.isOtpVerified = false;
+    user.resetOtp = undefined;
+    user.otpExpiries = undefined;
     await user.save();
     return res.status(200).json({ message: "Password reset successfully" });
   } catch (error) {

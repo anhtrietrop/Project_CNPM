@@ -8,20 +8,18 @@ function useGetCurrentUser() {
   const dispatch = useDispatch(); // ← sửa chính tả
 
   useEffect(() => {
-    // ← sửa chính tả
     const fetchUser = async () => {
       try {
         const result = await axios.get(`${serverURL}/api/user/current`, {
           withCredentials: true,
         });
         dispatch(setUserData(result.data.user));
-        console.log(result.data);
       } catch (error) {
-        console.log(error);
+        dispatch(setUserData(null)); // Set null nếu không có user
       }
     };
     fetchUser();
-  }, []); // ← thêm dependency array
+  }, [dispatch]);
 
   return null; // ← custom hook nên return something
 }

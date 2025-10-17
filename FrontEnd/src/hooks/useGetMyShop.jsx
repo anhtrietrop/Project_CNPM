@@ -1,15 +1,18 @@
 import { useEffect } from "react";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { setMyShopData } from "../redux/ownerSlice.js";
 
 function useGetMyShop() {
-  const dispatch = useDispatch(); // ← sửa chính tả
+  const dispatch = useDispatch();
+  const { userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    // ← sửa chính tả
+    // Chỉ fetch shop khi có userData
+    if (!userData) return;
+    
     const fetchShop = async () => {
       try {
         const result = await axios.get(`${serverURL}/api/shop/get-my`, {
@@ -25,7 +28,7 @@ function useGetMyShop() {
       }
     };
     fetchShop();
-  }, []); // ← thêm dependency array
+  }, [userData, dispatch]);
 
   return null; // ← custom hook nên return something
 }

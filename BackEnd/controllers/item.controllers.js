@@ -7,9 +7,9 @@ export const addItem = async (req, res) => {
     const { name, category, foodType, price } = req.body;
 
     // Validation
-    if (!name || !category || !foodType || !price) {
+    if (!name || !category || !price) {
       return res.status(400).json({ 
-        message: "All fields (name, category, foodType, price) are required" 
+        message: "All fields (name, category, price) are required" 
       });
     }
 
@@ -32,7 +32,7 @@ export const addItem = async (req, res) => {
     const item = await Item.create({
       name,
       category,
-      foodType,
+      foodType: foodType || "veg", // Default to veg if not provided
       price,
       image,
       shop: shop._id,
@@ -133,7 +133,16 @@ export const getSuggestedItems = async (req, res) => {
       return res.status(404).json({ message: "No items found" });
     }
     
-    return res.status(200).json(items);
+    // Xóa foodType và thêm tên nhà hàng
+    const itemsWithShopName = items.map(item => {
+      const { foodType, ...itemWithoutFoodType } = item.toObject();
+      return {
+        ...itemWithoutFoodType,
+        shopName: item.shop?.name || "Unknown Shop"
+      };
+    });
+    
+    return res.status(200).json(itemsWithShopName);
   } catch (error) {
     return res.status(500).json({ message: `get suggested items error ${error}` });
   }
