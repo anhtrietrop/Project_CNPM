@@ -8,20 +8,23 @@ export const addItem = async (req, res) => {
 
     // Validation
     if (!name || !category || !price) {
-      return res.status(400).json({ 
-        message: "All fields (name, category, price) are required" 
+      return res.status(400).json({
+        message: "All fields (name, category, price) are required",
       });
     }
 
     if (price < 0) {
-      return res.status(400).json({ 
-        message: "Price must be a positive number" 
+      return res.status(400).json({
+        message: "Price must be a positive number",
       });
     }
 
     let image;
     if (req.file) {
       image = await uploadOnCloudinary(req.file.path);
+      if (!image) {
+        return res.status(500).json({ message: "Failed to upload image" });
+      }
     }
 
     const shop = await Shop.findOne({ owner: req.userId });
@@ -49,7 +52,9 @@ export const addItem = async (req, res) => {
     return res.status(201).json(shop);
   } catch (error) {
     console.error("Add item error:", error);
-    return res.status(500).json({ message: `Add item error: ${error.message}` });
+    return res
+      .status(500)
+      .json({ message: `Add item error: ${error.message}` });
   }
 };
 
@@ -60,6 +65,9 @@ export const editItem = async (req, res) => {
     let image;
     if (req.file) {
       image = await uploadOnCloudinary(req.file.path);
+      if (!image) {
+        return res.status(500).json({ message: "Failed to upload image" });
+      }
     }
     const item = await Item.findByIdAndUpdate(
       itemId,
@@ -128,23 +136,25 @@ export const getSuggestedItems = async (req, res) => {
       .populate("shop", "name city")
       .sort({ createdAt: -1 })
       .limit(10);
-    
+
     if (!items || items.length === 0) {
       return res.status(404).json({ message: "No items found" });
     }
-    
+
     // Xóa foodType và thêm tên nhà hàng
-    const itemsWithShopName = items.map(item => {
+    const itemsWithShopName = items.map((item) => {
       const { foodType, ...itemWithoutFoodType } = item.toObject();
       return {
         ...itemWithoutFoodType,
-        shopName: item.shop?.name || "Unknown Shop"
+        shopName: item.shop?.name || "Unknown Shop",
       };
     });
-    
+
     return res.status(200).json(itemsWithShopName);
   } catch (error) {
-    return res.status(500).json({ message: `get suggested items error ${error}` });
+    return res
+      .status(500)
+      .json({ message: `get suggested items error ${error}` });
   }
 };
 
@@ -152,49 +162,52 @@ export const getSuggestedItems = async (req, res) => {
 export const searchItems = async (req, res) => {
   try {
     const { q, category, foodType, minPrice, maxPrice, city } = req.query;
-    
+
     let query = {};
-    
+
     // Tìm kiếm theo tên
     if (q) {
-      query.name = { $regex: q, $options: 'i' };
+      query.name = { $regex: q, $options: "i" };
     }
-    
+
     // Lọc theo category
     if (category) {
       query.category = category;
     }
-    
+
     // Lọc theo foodType
     if (foodType) {
       query.foodType = foodType;
     }
-    
+
     // Lọc theo giá
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
-    
+
     let items = await Item.find(query)
       .populate({
         path: "shop",
-        select: "name city state address"
+        select: "name city state address",
       })
       .sort({ createdAt: -1 });
-    
+
     // Lọc theo thành phố nếu có
     if (city) {
-      items = items.filter(item => 
-        item.shop && item.shop.city.toLowerCase().includes(city.toLowerCase())
+      items = items.filter(
+        (item) =>
+          item.shop && item.shop.city.toLowerCase().includes(city.toLowerCase())
       );
     }
-    
+
     return res.status(200).json(items);
   } catch (error) {
     console.error("Search items error:", error);
-    return res.status(500).json({ message: `Search items error: ${error.message}` });
+    return res
+      .status(500)
+      .json({ message: `Search items error: ${error.message}` });
   }
 };
 
@@ -202,14 +215,16 @@ export const searchItems = async (req, res) => {
 export const getItemsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
-    
+
     const items = await Item.find({ category })
       .populate("shop", "name city")
       .sort({ createdAt: -1 });
-    
+
     return res.status(200).json(items);
   } catch (error) {
     console.error("Get items by category error:", error);
-    return res.status(500).json({ message: `Get items by category error: ${error.message}` });
+    return res
+      .status(500)
+      .json({ message: `Get items by category error: ${error.message}` });
   }
 };

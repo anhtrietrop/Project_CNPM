@@ -100,7 +100,7 @@ export const signOut = async (req, res) => {
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) {
       return res.status(400).json({ message: "User does not exists" });
     }
@@ -108,7 +108,7 @@ export const sendOtp = async (req, res) => {
     user.resetOtp = otp;
     user.otpExpiries = Date.now() + 5 * 60 * 1000; // OTP hợp lệ trong 5 phút
     await user.save();
-    await sendOtpEmail(email, otp);
+    await sendOtpEmail(email.trim().toLowerCase(), otp);
     return res.status(200).json({ message: "OTP sent to email" });
   } catch (error) {
     return res.status(500).json(`send otp error ${error}`);
@@ -180,7 +180,7 @@ export const verifyOtp = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user || !user.isOtpVerified) {
       return res.status(400).json({ message: "Otp verification required" });
     }
