@@ -7,8 +7,10 @@ import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import shopRouter from "./routes/shop.routes.js";
 import itemRouter from "./routes/item.routes.js";
-import cartRouter from "./routes/cart.routes.js";
-import ratingRouter from "./routes/rating.routes.js";
+import orderRouter from "./routes/order.routes.js";
+// Cart và Rating đã chuyển sang localStorage - không cần routes này nữa
+// import cartRouter from "./routes/cart.routes.js";
+// import ratingRouter from "./routes/rating.routes.js";
 import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,8 +21,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
-app.use("/api/cart", cartRouter);
-app.use("/api/rating", ratingRouter);
+app.use("/api/order", orderRouter);
+// Cart và Rating routes đã bị disable - dữ liệu lưu trong localStorage
+// app.use("/api/cart", cartRouter);
+// app.use("/api/rating", ratingRouter);
 app.listen(PORT, () => {
   connectDB();
   console.log(`Server is running on port ${PORT}`);

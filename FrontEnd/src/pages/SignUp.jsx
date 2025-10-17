@@ -5,7 +5,7 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { serverURL } from "../App"; // Import từ App.js
-import {} from "react-spinners";
+import { ClipLoader } from "react-spinners";
 
 import axios from "axios";
 import { setUserData } from "../redux/userSlice";
@@ -177,7 +177,7 @@ function SignUp() {
           onClick={handleSignUp}
           disabled={loading}
         >
-          {loading ? <clipLoader color="white" size={20} /> : "Sign Up"}
+          {loading ? <ClipLoader color="white" size={20} /> : "Sign Up"}
         </button>
         <p className="text-red-500 text-center my-[10px]">*{err}</p>
         <p

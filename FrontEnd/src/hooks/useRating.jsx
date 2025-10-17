@@ -1,24 +1,38 @@
 import { useState } from "react";
-import axios from "axios";
-import { serverURL } from "../App.jsx";
+import { useSelector } from "react-redux";
+import {
+  addOrUpdateRating,
+  getItemRatings as getItemRatingsFromStorage,
+  getUserRatingForItem,
+  deleteRating as deleteRatingFromStorage,
+  calculateItemRatingStats,
+} from "../utils/ratingStorage.js";
 
 function useRating() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Thêm đánh giá
-  const addRating = async (itemId, rating, comment = "") => {
+  // Lấy userId từ Redux store (nếu user đã đăng nhập)
+  const currentUser = useSelector((state) => state.user.currentUser);
+  const userId = currentUser?._id || "guest"; // Dùng "guest" nếu chưa đăng nhập
+
+  // Thêm hoặc cập nhật đánh giá
+  const addRating = (itemId, rating, comment = "") => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${serverURL}/api/rating/item/${itemId}`,
-        { rating, comment },
-        { withCredentials: true }
-      );
       setError(null);
-      return response.data;
+
+      // Validation
+      if (!rating || rating < 1 || rating > 5) {
+        throw new Error("Rating must be between 1 and 5");
+      }
+
+      // Lưu rating vào localStorage
+      const newRating = addOrUpdateRating(itemId, userId, rating, comment);
+
+      return newRating;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add rating");
+      setError(err.message || "Failed to add rating");
       console.error("Add rating error:", err);
       throw err;
     } finally {
@@ -26,17 +40,30 @@ function useRating() {
     }
   };
 
-  // Lấy đánh giá của item
-  const getItemRatings = async (itemId, page = 1, limit = 10) => {
+  // Lấy tất cả đánh giá của item
+  const getItemRatings = (itemId, page = 1, limit = 10) => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${serverURL}/api/rating/item/${itemId}?page=${page}&limit=${limit}`
-      );
       setError(null);
-      return response.data;
+
+      // Lấy tất cả ratings của item từ localStorage
+      const allRatings = getItemRatingsFromStorage(itemId);
+
+      // Phân trang
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedRatings = allRatings.slice(startIndex, endIndex);
+
+      const totalPages = Math.ceil(allRatings.length / limit);
+
+      return {
+        ratings: paginatedRatings,
+        totalPages,
+        currentPage: page,
+        total: allRatings.length,
+      };
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to get ratings");
+      setError(err.message || "Failed to get ratings");
       console.error("Get ratings error:", err);
       throw err;
     } finally {
@@ -44,20 +71,48 @@ function useRating() {
     }
   };
 
+  // Lấy rating của user hiện tại cho một item
+  const getUserRating = (itemId) => {
+    try {
+      return getUserRatingForItem(itemId, userId);
+    } catch (err) {
+      console.error("Get user rating error:", err);
+      return null;
+    }
+  };
+
   // Xóa đánh giá
-  const deleteRating = async (ratingId) => {
+  const deleteRating = (itemId) => {
     try {
       setLoading(true);
-      await axios.delete(`${serverURL}/api/rating/${ratingId}`, {
-        withCredentials: true,
-      });
       setError(null);
+
+      const success = deleteRatingFromStorage(itemId, userId);
+
+      if (!success) {
+        throw new Error("Rating not found");
+      }
+
+      return true;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete rating");
+      setError(err.message || "Failed to delete rating");
       console.error("Delete rating error:", err);
       throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Lấy thống kê rating của item (rating trung bình và số lượng)
+  const getItemRatingStats = (itemId) => {
+    try {
+      return calculateItemRatingStats(itemId);
+    } catch (err) {
+      console.error("Get rating stats error:", err);
+      return {
+        averageRating: 0,
+        ratingCount: 0,
+      };
     }
   };
 
@@ -66,7 +121,9 @@ function useRating() {
     error,
     addRating,
     getItemRatings,
+    getUserRating,
     deleteRating,
+    getItemRatingStats,
   };
 }
 

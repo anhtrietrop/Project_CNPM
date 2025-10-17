@@ -1,43 +1,58 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { serverURL } from "../App.jsx";
+import { useSelector, useDispatch } from "react-redux";
+import { useState } from "react";
+import {
+  addToCart as addToCartAction,
+  updateCartItem as updateCartItemAction,
+  removeFromCart as removeFromCartAction,
+  clearCart as clearCartAction,
+} from "../redux/cartSlice.js";
 
 function useCart() {
-  const [cart, setCart] = useState(null);
+  // Lấy cart từ Redux store
+  const cart = useSelector((state) => state.cart);
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Lấy giỏ hàng
-  const getCart = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${serverURL}/api/cart`, {
-        withCredentials: true,
-      });
-      setCart(response.data);
-      setError(null);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to get cart");
-      console.error("Get cart error:", err);
-    } finally {
-      setLoading(false);
-    }
+  // Lấy giỏ hàng (không cần gọi API nữa, đã có trong Redux)
+  const getCart = () => {
+    return cart;
   };
 
   // Thêm vào giỏ hàng
   const addToCart = async (itemId, quantity = 1) => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${serverURL}/api/cart/add`,
-        { itemId, quantity },
-        { withCredentials: true }
-      );
-      setCart(response.data);
       setError(null);
-      return response.data;
+
+      // Giả lập việc fetch item data (trong thực tế bạn có thể đã có data này)
+      // Nếu bạn cần fetch item từ API, có thể làm ở đây
+      // Tạm thời giả sử item data đã có sẵn hoặc được truyền vào
+
+      // Dispatch action để thêm vào Redux store
+      dispatch(addToCartAction({ item: { _id: itemId, price: 0 }, quantity }));
+
+      return cart;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add to cart");
+      setError(err.message || "Failed to add to cart");
+      console.error("Add to cart error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Thêm vào giỏ hàng với full item data
+  const addItemToCart = (item, quantity = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      dispatch(addToCartAction({ item, quantity }));
+
+      return cart;
+    } catch (err) {
+      setError(err.message || "Failed to add to cart");
       console.error("Add to cart error:", err);
       throw err;
     } finally {
@@ -46,19 +61,16 @@ function useCart() {
   };
 
   // Cập nhật số lượng
-  const updateCartItem = async (itemId, quantity) => {
+  const updateCartItem = (itemId, quantity) => {
     try {
       setLoading(true);
-      const response = await axios.put(
-        `${serverURL}/api/cart/update/${itemId}`,
-        { quantity },
-        { withCredentials: true }
-      );
-      setCart(response.data);
       setError(null);
-      return response.data;
+
+      dispatch(updateCartItemAction({ itemId, quantity }));
+
+      return cart;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update cart item");
+      setError(err.message || "Failed to update cart item");
       console.error("Update cart item error:", err);
       throw err;
     } finally {
@@ -67,18 +79,16 @@ function useCart() {
   };
 
   // Xóa khỏi giỏ hàng
-  const removeFromCart = async (itemId) => {
+  const removeFromCart = (itemId) => {
     try {
       setLoading(true);
-      const response = await axios.delete(
-        `${serverURL}/api/cart/remove/${itemId}`,
-        { withCredentials: true }
-      );
-      setCart(response.data);
       setError(null);
-      return response.data;
+
+      dispatch(removeFromCartAction(itemId));
+
+      return cart;
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to remove from cart");
+      setError(err.message || "Failed to remove from cart");
       console.error("Remove from cart error:", err);
       throw err;
     } finally {
@@ -87,16 +97,14 @@ function useCart() {
   };
 
   // Xóa toàn bộ giỏ hàng
-  const clearCart = async () => {
+  const clearCart = () => {
     try {
       setLoading(true);
-      await axios.delete(`${serverURL}/api/cart/clear`, {
-        withCredentials: true,
-      });
-      setCart({ items: [], totalAmount: 0 });
       setError(null);
+
+      dispatch(clearCartAction());
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to clear cart");
+      setError(err.message || "Failed to clear cart");
       console.error("Clear cart error:", err);
       throw err;
     } finally {
@@ -117,16 +125,13 @@ function useCart() {
     return cartItem ? cartItem.quantity : 0;
   };
 
-  useEffect(() => {
-    getCart();
-  }, []);
-
   return {
     cart,
     loading,
     error,
     getCart,
     addToCart,
+    addItemToCart, // Thêm function mới này để add với full item data
     updateCartItem,
     removeFromCart,
     clearCart,

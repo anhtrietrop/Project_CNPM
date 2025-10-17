@@ -1,9 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaTrash, FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
 import useCart from "../hooks/useCart.jsx";
 
 function Cart({ isOpen, onClose }) {
-  const { cart, loading, removeFromCart, updateCartItem, clearCart } = useCart();
+  const navigate = useNavigate();
+  // ✅ SỬ DỤNG cart TỪ HOOK thay vì từ prop
+  const { cart, loading, removeFromCart, updateCartItem, clearCart } =
+    useCart();
   const [updatingItems, setUpdatingItems] = useState(new Set());
 
   const handleQuantityChange = async (itemId, newQuantity) => {
@@ -13,12 +17,12 @@ function Cart({ isOpen, onClose }) {
     }
 
     try {
-      setUpdatingItems(prev => new Set(prev).add(itemId));
+      setUpdatingItems((prev) => new Set(prev).add(itemId));
       await updateCartItem(itemId, newQuantity);
     } catch (error) {
       console.error("Error updating quantity:", error);
     } finally {
-      setUpdatingItems(prev => {
+      setUpdatingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(itemId);
         return newSet;
@@ -28,12 +32,12 @@ function Cart({ isOpen, onClose }) {
 
   const handleRemoveItem = async (itemId) => {
     try {
-      setUpdatingItems(prev => new Set(prev).add(itemId));
+      setUpdatingItems((prev) => new Set(prev).add(itemId));
       await removeFromCart(itemId);
     } catch (error) {
       console.error("Error removing item:", error);
     } finally {
-      setUpdatingItems(prev => {
+      setUpdatingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(itemId);
         return newSet;
@@ -42,7 +46,7 @@ function Cart({ isOpen, onClose }) {
   };
 
   const handleClearCart = async () => {
-    if (window.confirm("Are you sure you want to clear your cart?")) {
+    if (window.confirm("Bạn có chắc muốn xóa toàn bộ giỏ hàng?")) {
       try {
         await clearCart();
       } catch (error) {
@@ -54,20 +58,28 @@ function Cart({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <FaShoppingCart />
-            Shopping Cart
+            Giỏ hàng
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="bg-[#3399df] text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+            >
+              Quay lại Home
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Cart Content */}
@@ -79,24 +91,25 @@ function Cart({ isOpen, onClose }) {
           ) : !cart?.items || cart.items.length === 0 ? (
             <div className="text-center py-8">
               <FaShoppingCart className="mx-auto text-4xl text-gray-300 mb-4" />
-              <p className="text-gray-500">Your cart is empty</p>
+              <p className="text-gray-500">Giỏ hàng trống</p>
             </div>
           ) : (
             <div className="space-y-4">
               {cart.items.map((cartItem) => (
                 <div
                   key={cartItem.item._id}
-                  className="flex items-center gap-4 p-3 border rounded-lg"
+                  className="flex items-center gap-4 p-3 border rounded-lg hover:shadow-md transition-shadow"
                 >
                   <img
                     src={cartItem.item.image}
                     alt={cartItem.item.name}
                     className="w-16 h-16 object-cover rounded-lg"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/64x64?text=No+Image";
+                      e.target.src =
+                        "https://via.placeholder.com/64x64?text=No+Image";
                     }}
                   />
-                  
+
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-800">
                       {cartItem.item.name}
@@ -105,27 +118,37 @@ function Cart({ isOpen, onClose }) {
                       {cartItem.item.category} • {cartItem.item.foodType}
                     </p>
                     <p className="text-sm text-gray-500">
-                      From: {cartItem.item.shop?.name}
+                      Shop: {cartItem.item.shop?.name}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleQuantityChange(cartItem.item._id, cartItem.quantity - 1)}
+                      onClick={() =>
+                        handleQuantityChange(
+                          cartItem.item._id,
+                          cartItem.quantity - 1
+                        )
+                      }
                       disabled={updatingItems.has(cartItem.item._id)}
-                      className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 disabled:opacity-50"
+                      className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 disabled:opacity-50 transition-colors"
                     >
                       <FaMinus className="text-xs" />
                     </button>
-                    
+
                     <span className="w-8 text-center font-medium">
                       {cartItem.quantity}
                     </span>
-                    
+
                     <button
-                      onClick={() => handleQuantityChange(cartItem.item._id, cartItem.quantity + 1)}
+                      onClick={() =>
+                        handleQuantityChange(
+                          cartItem.item._id,
+                          cartItem.quantity + 1
+                        )
+                      }
                       disabled={updatingItems.has(cartItem.item._id)}
-                      className="bg-[#3399df] text-white p-1 rounded-full hover:bg-blue-600 disabled:opacity-50"
+                      className="bg-[#3399df] text-white p-1 rounded-full hover:bg-blue-600 disabled:opacity-50 transition-colors"
                     >
                       <FaPlus className="text-xs" />
                     </button>
@@ -143,7 +166,7 @@ function Cart({ isOpen, onClose }) {
                   <button
                     onClick={() => handleRemoveItem(cartItem.item._id)}
                     disabled={updatingItems.has(cartItem.item._id)}
-                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                    className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
                   >
                     <FaTrash />
                   </button>
@@ -157,27 +180,27 @@ function Cart({ isOpen, onClose }) {
         {cart?.items && cart.items.length > 0 && (
           <div className="border-t p-4">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-bold">Total:</span>
+              <span className="text-lg font-bold">Tổng cộng:</span>
               <span className="text-xl font-bold text-[#3399df]">
                 ${cart.totalAmount?.toFixed(2) || "0.00"}
               </span>
             </div>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={handleClearCart}
-                className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium"
               >
-                Clear Cart
+                Xóa giỏ hàng
               </button>
               <button
                 onClick={() => {
-                  // TODO: Implement checkout
-                  alert("Checkout functionality coming soon!");
+                  onClose();
+                  navigate("/checkout");
                 }}
-                className="flex-1 bg-[#3399df] text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+                className="flex-1 bg-[#3399df] text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors font-medium"
               >
-                Checkout
+                Thanh toán
               </button>
             </div>
           </div>
