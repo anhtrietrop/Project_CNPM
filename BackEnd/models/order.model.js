@@ -7,9 +7,13 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    items: [
+    orderItems: [
       {
-        item: {
+        orderItemId: {
+          type: mongoose.Schema.Types.ObjectId,
+          default: () => new mongoose.Types.ObjectId(),
+        },
+        itemId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Item",
           required: true,
@@ -19,13 +23,56 @@ const orderSchema = new mongoose.Schema(
           required: true,
           min: 1,
         },
+        note: {
+          type: String,
+          default: "",
+        },
         price: {
           type: Number,
           required: true,
         },
-        shop: {
+        subtotal: {
+          type: Number,
+          required: true,
+        },
+        // Embedded item data for performance
+        itemName: {
+          type: String,
+          required: true,
+        },
+        itemImage: {
+          type: String,
+          required: true,
+        },
+        itemCategory: {
+          type: String,
+          required: true,
+        },
+        itemFoodType: {
+          type: String,
+          required: true,
+        },
+        // Embedded shop data for performance
+        shopId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Shop",
+          required: true,
+        },
+        shopName: {
+          type: String,
+          required: true,
+        },
+        shopCity: {
+          type: String,
+          required: true,
+        },
+        shopState: {
+          type: String,
+          required: true,
+        },
+        shopAddress: {
+          type: String,
+          required: true,
         },
       },
     ],
@@ -109,6 +156,20 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Middleware để tính subtotal và totalAmount trước khi save
+orderSchema.pre("save", function (next) {
+  if (this.items && this.items.length > 0) {
+    // Tính subtotal cho từng item
+    this.items.forEach(item => {
+      item.subtotal = item.price * item.quantity;
+    });
+    
+    // Tính totalAmount
+    this.totalAmount = this.items.reduce((total, item) => total + item.subtotal, 0);
+  }
+  next();
+});
 
 // Index để tìm kiếm nhanh
 orderSchema.index({ user: 1, createdAt: -1 });

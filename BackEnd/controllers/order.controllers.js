@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import Item from "../models/item.model.js";
+import Shop from "../models/shop.model.js";
 
 // Tạo đơn hàng mới
 export const createOrder = async (req, res) => {
@@ -26,21 +27,42 @@ export const createOrder = async (req, res) => {
         .json({ message: "Contact information is required" });
     }
 
-    // Verify items và lấy thông tin shop
+    // Verify items và lấy thông tin đầy đủ cho embedded documents
     const orderItems = [];
     for (const cartItem of items) {
-      const item = await Item.findById(cartItem.item._id || cartItem.item);
+      const item = await Item.findById(cartItem.item._id || cartItem.item).populate('shop');
       if (!item) {
         return res.status(404).json({
           message: `Item ${cartItem.item._id || cartItem.item} not found`,
         });
       }
 
+      if (!item.shop) {
+        return res.status(404).json({
+          message: `Shop not found for item ${item.name}`,
+        });
+      }
+
       orderItems.push({
-        item: item._id,
+        item: {
+          _id: item._id,
+          name: item.name,
+          image: item.image,
+          category: item.category,
+          foodType: item.foodType,
+          rating: item.rating,
+          ratingCount: item.ratingCount,
+        },
         quantity: cartItem.quantity,
         price: item.price,
-        shop: item.shop,
+        shop: {
+          _id: item.shop._id,
+          name: item.shop.name,
+          city: item.shop.city,
+          state: item.shop.state,
+          address: item.shop.address,
+        },
+        subtotal: item.price * cartItem.quantity,
       });
     }
 
@@ -48,7 +70,7 @@ export const createOrder = async (req, res) => {
     const estimatedDeliveryTime = new Date();
     estimatedDeliveryTime.setMinutes(estimatedDeliveryTime.getMinutes() + 35);
 
-    // Tạo order
+    // Tạo order với embedded documents
     const order = await Order.create({
       user: req.userId,
       items: orderItems,
@@ -59,21 +81,11 @@ export const createOrder = async (req, res) => {
       estimatedDeliveryTime,
     });
 
-    // Populate thông tin
-    await order.populate([
-      {
-        path: "items.item",
-        select: "name price image category",
-      },
-      {
-        path: "items.shop",
-        select: "name city address",
-      },
-      {
-        path: "user",
-        select: "name email",
-      },
-    ]);
+    // Populate chỉ thông tin user vì items đã embedded
+    await order.populate({
+      path: "user",
+      select: "fullName email mobile",
+    });
 
     return res.status(201).json({
       message: "Order created successfully",
@@ -98,16 +110,10 @@ export const getUserOrders = async (req, res) => {
     }
 
     const orders = await Order.find(query)
-      .populate([
-        {
-          path: "items.item",
-          select: "name price image category",
-        },
-        {
-          path: "items.shop",
-          select: "name city",
-        },
-      ])
+      .populate({
+        path: "user",
+        select: "fullName email mobile",
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -136,20 +142,10 @@ export const getOrderById = async (req, res) => {
     const order = await Order.findOne({
       _id: orderId,
       user: req.userId,
-    }).populate([
-      {
-        path: "items.item",
-        select: "name price image category",
-      },
-      {
-        path: "items.shop",
-        select: "name city address phone",
-      },
-      {
-        path: "user",
-        select: "name email phone",
-      },
-    ]);
+    }).populate({
+      path: "user",
+      select: "fullName email mobile",
+    });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });

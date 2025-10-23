@@ -8,8 +8,13 @@ import userRouter from "./routes/user.routes.js";
 import shopRouter from "./routes/shop.routes.js";
 import itemRouter from "./routes/item.routes.js";
 import orderRouter from "./routes/order.routes.js";
-// Cart và Rating đã chuyển sang localStorage - không cần routes này nữa
-// import cartRouter from "./routes/cart.routes.js";
+import cartRouter from "./routes/cart.routes.js";
+import roleRouter from "./routes/role.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
+import deliveryRouter from "./routes/delivery.routes.js";
+import droneRouter from "./routes/drone.routes.js";
+import locationRouter from "./routes/location.routes.js";
+// Rating đã chuyển sang localStorage - không cần routes này nữa
 // import ratingRouter from "./routes/rating.routes.js";
 import cors from "cors";
 const app = express();
@@ -22,8 +27,13 @@ app.use("/api/user", userRouter);
 app.use("/api/shop", shopRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/order", orderRouter);
-// Cart và Rating routes đã bị disable - dữ liệu lưu trong localStorage
-// app.use("/api/cart", cartRouter);
+app.use("/api/cart", cartRouter);
+app.use("/api/role", roleRouter);
+app.use("/api/payment", paymentRouter);
+app.use("/api/delivery", deliveryRouter);
+app.use("/api/drone", droneRouter);
+app.use("/api/location", locationRouter);
+// Rating routes đã bị disable - dữ liệu lưu trong localStorage
 // app.use("/api/rating", ratingRouter);
 app.listen(PORT, () => {
   connectDB();
