@@ -208,8 +208,8 @@ export const updateCartItem = async (req, res) => {
       return res.status(404).json({ message: "Item not found in cart" });
     }
 
-    cart.items[itemIndex].quantity = quantity;
-    cart.items[itemIndex].subtotal = cart.items[itemIndex].price * quantity;
+    cart.cartItems[itemIndex].quantity = quantity;
+    cart.cartItems[itemIndex].subtotal = cart.cartItems[itemIndex].price * quantity;
     await cart.save();
 
     return res.status(200).json(cart);
@@ -252,12 +252,13 @@ export const clearCart = async (req, res) => {
       return res.status(404).json({ message: "Cart not found" });
     }
 
-    cart.items = [];
+    cart.cartItems = [];
+    cart.totalAmount = 0;
     await cart.save();
 
     return res.status(200).json({
       message: "Cart cleared successfully",
-      items: [],
+      cartItems: [],
       totalAmount: 0,
     });
   } catch (error) {

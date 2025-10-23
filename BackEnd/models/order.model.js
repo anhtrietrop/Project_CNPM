@@ -74,6 +74,11 @@ const orderSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        shopOwnerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
       },
     ],
     totalAmount: {
@@ -139,6 +144,10 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+    drone: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Drone",
+    },
     estimatedDeliveryTime: {
       type: Date,
     },
@@ -159,14 +168,14 @@ const orderSchema = new mongoose.Schema(
 
 // Middleware để tính subtotal và totalAmount trước khi save
 orderSchema.pre("save", function (next) {
-  if (this.items && this.items.length > 0) {
+  if (this.orderItems && this.orderItems.length > 0) {
     // Tính subtotal cho từng item
-    this.items.forEach(item => {
+    this.orderItems.forEach(item => {
       item.subtotal = item.price * item.quantity;
     });
     
     // Tính totalAmount
-    this.totalAmount = this.items.reduce((total, item) => total + item.subtotal, 0);
+    this.totalAmount = this.orderItems.reduce((total, item) => total + item.subtotal, 0);
   }
   next();
 });
@@ -174,6 +183,7 @@ orderSchema.pre("save", function (next) {
 // Index để tìm kiếm nhanh
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ orderStatus: 1 });
+orderSchema.index({ "orderItems.shopOwnerId": 1, createdAt: -1 });
 
 const Order = mongoose.model("Order", orderSchema);
 
