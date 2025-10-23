@@ -1,6 +1,7 @@
 import Order from "../models/order.model.js";
 import Item from "../models/item.model.js";
 import Shop from "../models/shop.model.js";
+import Drone from "../models/drone.model.js";
 
 // Tạo đơn hàng mới
 export const createOrder = async (req, res) => {
@@ -30,39 +31,41 @@ export const createOrder = async (req, res) => {
     // Verify items và lấy thông tin đầy đủ cho embedded documents
     const orderItems = [];
     for (const cartItem of items) {
-      const item = await Item.findById(cartItem.item._id || cartItem.item).populate('shop');
-      if (!item) {
-        return res.status(404).json({
-          message: `Item ${cartItem.item._id || cartItem.item} not found`,
+      // CartItem đã có embedded data, chỉ cần lấy shop owner
+      const itemId = cartItem.itemId || cartItem.item?._id || cartItem.item;
+
+      if (!itemId) {
+        console.error("Invalid cart item:", cartItem);
+        return res.status(400).json({
+          message: "Invalid cart item data",
         });
       }
 
-      if (!item.shop) {
+      // Lấy shop và owner info
+      const shop = await Shop.findById(cartItem.shopId).populate("owner");
+      if (!shop || !shop.owner) {
+        console.error(`Shop owner not found for shop ${cartItem.shopId}`);
         return res.status(404).json({
-          message: `Shop not found for item ${item.name}`,
+          message: `Shop owner not found for item ${cartItem.itemName}`,
         });
       }
 
       orderItems.push({
-        item: {
-          _id: item._id,
-          name: item.name,
-          image: item.image,
-          category: item.category,
-          foodType: item.foodType,
-          rating: item.rating,
-          ratingCount: item.ratingCount,
-        },
+        itemId: itemId,
         quantity: cartItem.quantity,
-        price: item.price,
-        shop: {
-          _id: item.shop._id,
-          name: item.shop.name,
-          city: item.shop.city,
-          state: item.shop.state,
-          address: item.shop.address,
-        },
-        subtotal: item.price * cartItem.quantity,
+        price: cartItem.price,
+        subtotal: cartItem.subtotal || cartItem.price * cartItem.quantity,
+        note: cartItem.note || "",
+        itemName: cartItem.itemName,
+        itemImage: cartItem.itemImage,
+        itemCategory: cartItem.itemCategory,
+        itemFoodType: cartItem.itemFoodType,
+        shopId: cartItem.shopId,
+        shopName: cartItem.shopName,
+        shopCity: cartItem.shopCity,
+        shopState: cartItem.shopState,
+        shopAddress: cartItem.shopAddress,
+        shopOwnerId: shop.owner._id,
       });
     }
 
@@ -73,7 +76,7 @@ export const createOrder = async (req, res) => {
     // Tạo order với embedded documents
     const order = await Order.create({
       user: req.userId,
-      items: orderItems,
+      orderItems: orderItems,
       totalAmount,
       deliveryAddress,
       contactInfo,
@@ -242,6 +245,228 @@ export const updateOrderStatus = async (req, res) => {
     console.error("Update order status error:", error);
     return res.status(500).json({
       message: `Update order status error: ${error.message}`,
+    });
+  }
+};
+
+// Lấy tất cả đơn hàng của shop owner
+export const getShopOrders = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10 } = req.query;
+
+    // Build query để tìm orders có chứa items của shop owner
+    const query = {
+      "orderItems.shopOwnerId": req.userId,
+    };
+
+    if (status) {
+      query.orderStatus = status;
+    }
+
+    const orders = await Order.find(query)
+      .populate({
+        path: "user",
+        select: "fullName email mobile",
+      })
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Order.countDocuments(query);
+
+    return res.status(200).json({
+      orders,
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total,
+    });
+  } catch (error) {
+    console.error("Get shop orders error:", error);
+    return res.status(500).json({
+      message: `Get shop orders error: ${error.message}`,
+    });
+  }
+};
+
+// Lấy chi tiết đơn hàng của shop owner
+export const getShopOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findOne({
+      _id: orderId,
+      "orderItems.shopOwnerId": req.userId,
+    }).populate({
+      path: "user",
+      select: "fullName email mobile",
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    return res.status(200).json(order);
+  } catch (error) {
+    console.error("Get shop order by id error:", error);
+    return res.status(500).json({
+      message: `Get shop order by id error: ${error.message}`,
+    });
+  }
+};
+
+// Cập nhật trạng thái đơn hàng bởi shop owner
+export const updateShopOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = [
+      "pending",
+      "confirmed",
+      "preparing",
+      "delivering",
+      "completed",
+      "cancelled",
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid order status" });
+    }
+
+    const order = await Order.findOne({
+      _id: orderId,
+      "orderItems.shopOwnerId": req.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found or you don't have permission to update",
+      });
+    }
+
+    order.orderStatus = status;
+
+    if (status === "completed") {
+      order.deliveredAt = new Date();
+      order.paymentStatus = "paid";
+    } else if (status === "cancelled") {
+      order.cancelledAt = new Date();
+      if (!order.cancelReason) {
+        order.cancelReason = "Cancelled by shop owner";
+      }
+    }
+
+    await order.save();
+
+    return res.status(200).json({
+      message: "Order status updated successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Update shop order status error:", error);
+    return res.status(500).json({
+      message: `Update shop order status error: ${error.message}`,
+    });
+  }
+};
+
+// Lấy danh sách drones có sẵn cho shop owner
+export const getAvailableDrones = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Lấy order để xác định shop
+    const order = await Order.findOne({
+      _id: orderId,
+      "orderItems.shopOwnerId": req.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found or you don't have permission",
+      });
+    }
+
+    // Lấy shopId từ orderItems (lấy shop đầu tiên)
+    const shopId = order.orderItems[0].shopId;
+
+    // Lấy drones available của shop
+    const drones = await Drone.find({
+      shop: shopId,
+      status: "available",
+      isActive: true,
+      "battery.current": { $gte: 30 }, // Chỉ lấy drone có pin >= 30%
+    }).select('model serialNumber battery status specifications');
+
+    return res.status(200).json({
+      drones,
+    });
+  } catch (error) {
+    console.error("Get available drones error:", error);
+    return res.status(500).json({
+      message: `Get available drones error: ${error.message}`,
+    });
+  }
+};
+
+// Assign drone cho order và chuyển sang delivering
+export const assignDroneToOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { droneId } = req.body;
+
+    if (!droneId) {
+      return res.status(400).json({ message: "Drone ID is required" });
+    }
+
+    // Kiểm tra order
+    const order = await Order.findOne({
+      _id: orderId,
+      "orderItems.shopOwnerId": req.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found or you don't have permission",
+      });
+    }
+
+    // Kiểm tra order phải ở trạng thái preparing
+    if (order.orderStatus !== "preparing") {
+      return res.status(400).json({
+        message: "Order must be in preparing status to assign drone",
+      });
+    }
+
+    // Kiểm tra drone
+    const drone = await Drone.findById(droneId);
+    if (!drone) {
+      return res.status(404).json({ message: "Drone not found" });
+    }
+
+    if (drone.status !== "available") {
+      return res.status(400).json({ message: "Drone is not available" });
+    }
+
+    // Cập nhật order và drone
+    order.drone = droneId;
+    order.orderStatus = "delivering";
+    await order.save();
+
+    // Cập nhật trạng thái drone
+    drone.status = "busy";
+    drone.flightStats.totalFlights += 1;
+    await drone.save();
+
+    return res.status(200).json({
+      message: "Drone assigned successfully and order is now delivering",
+      order,
+      drone,
+    });
+  } catch (error) {
+    console.error("Assign drone to order error:", error);
+    return res.status(500).json({
+      message: `Assign drone to order error: ${error.message}`,
     });
   }
 };

@@ -5,19 +5,16 @@ import Shop from "../models/shop.model.js";
 export const createDrone = async (req, res) => {
   try {
     const {
-      shopId,
       model,
       serialNumber,
-      capacity,
-      specifications,
     } = req.body;
 
-    // Kiểm tra shop tồn tại
-    const shop = await Shop.findById(shopId);
+    // Tìm shop của user hiện tại
+    const shop = await Shop.findOne({ owner: req.userId });
     if (!shop) {
       return res.status(404).json({
         success: false,
-        message: "Không tìm thấy cửa hàng",
+        message: "Không tìm thấy cửa hàng của bạn",
       });
     }
 
@@ -31,11 +28,23 @@ export const createDrone = async (req, res) => {
     }
 
     const drone = new Drone({
-      shop: shopId,
+      shop: shop._id,
       model,
       serialNumber,
-      capacity,
-      specifications,
+      capacity: {
+        weight: 5,
+        volume: 50000,
+      },
+      specifications: {
+        maxSpeed: 60,
+        maxAltitude: 500,
+        flightTime: 30,
+        range: 15,
+      },
+      battery: {
+        current: 100,
+        maxCapacity: 5000,
+      },
     });
 
     await drone.save();
@@ -79,6 +88,40 @@ export const getShopDrones = async (req, res) => {
         pages: Math.ceil(total / limit),
         total,
       },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
+// Lấy drones của shop owner hiện tại
+export const getMyShopDrones = async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    // Tìm shop của user hiện tại
+    const shop = await Shop.findOne({ owner: req.userId });
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy shop của bạn",
+      });
+    }
+
+    const query = { shop: shop._id, isActive: true };
+    if (status) query.status = status;
+
+    const drones = await Drone.find(query)
+      .populate("shop", "name city")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: drones,
     });
   } catch (error) {
     res.status(500).json({

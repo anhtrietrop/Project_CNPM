@@ -5,6 +5,11 @@ import {
   getOrderById,
   cancelOrder,
   updateOrderStatus,
+  getShopOrders,
+  getShopOrderById,
+  updateShopOrderStatus,
+  getAvailableDrones,
+  assignDroneToOrder,
 } from "../controllers/order.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 
@@ -12,6 +17,13 @@ const router = express.Router();
 
 // Tất cả routes đều cần authentication
 router.use(isAuth);
+
+// Shop owner routes - Phải đặt trước các routes có :orderId parameter
+router.get("/shop/my-orders", getShopOrders);
+router.get("/shop/:orderId", getShopOrderById);
+router.put("/shop/:orderId/status", updateShopOrderStatus);
+router.get("/shop/:orderId/available-drones", getAvailableDrones);
+router.post("/shop/:orderId/assign-drone", assignDroneToOrder);
 
 // Tạo đơn hàng mới
 router.post("/", createOrder);

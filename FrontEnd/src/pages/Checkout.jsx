@@ -284,14 +284,14 @@ const Checkout = () => {
         paymentMethod,
       };
 
-      const response = await axios.post(`${serverURL}/api/order/create`, orderData, {
+      const response = await axios.post(`${serverURL}/api/order`, orderData, {
         withCredentials: true,
       });
 
       if (response.data) {
         alert("Đặt hàng thành công!");
         clearCart();
-        navigate("/orders");
+        navigate("/");
       }
     } catch (error) {
       console.error("Error creating order:", error);
