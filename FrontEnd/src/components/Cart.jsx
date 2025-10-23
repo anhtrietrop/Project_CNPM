@@ -88,21 +88,21 @@ function Cart({ isOpen, onClose }) {
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3399df]"></div>
             </div>
-          ) : !cart?.items || cart.items.length === 0 ? (
+          ) : (!cart?.cartItems || cart.cartItems.length === 0) && (!cart?.items || cart.items.length === 0) ? (
             <div className="text-center py-8">
               <FaShoppingCart className="mx-auto text-4xl text-gray-300 mb-4" />
               <p className="text-gray-500">Giỏ hàng trống</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {cart.items.map((cartItem) => (
+              {(cart.cartItems || cart.items || []).map((cartItem) => (
                 <div
-                  key={cartItem.item._id}
+                  key={cartItem.itemId}
                   className="flex items-center gap-4 p-3 border rounded-lg hover:shadow-md transition-shadow"
                 >
                   <img
-                    src={cartItem.item.image}
-                    alt={cartItem.item.name}
+                    src={cartItem.itemImage}
+                    alt={cartItem.itemName}
                     className="w-16 h-16 object-cover rounded-lg"
                     onError={(e) => {
                       e.target.src =
@@ -112,13 +112,13 @@ function Cart({ isOpen, onClose }) {
 
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-800">
-                      {cartItem.item.name}
+                      {cartItem.itemName}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {cartItem.item.category} • {cartItem.item.foodType}
+                      {cartItem.itemCategory} • {cartItem.itemFoodType}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Shop: {cartItem.item.shop?.name}
+                      Shop: {cartItem.shopName}
                     </p>
                   </div>
 
@@ -126,11 +126,11 @@ function Cart({ isOpen, onClose }) {
                     <button
                       onClick={() =>
                         handleQuantityChange(
-                          cartItem.item._id,
+                          cartItem.itemId,
                           cartItem.quantity - 1
                         )
                       }
-                      disabled={updatingItems.has(cartItem.item._id)}
+                      disabled={updatingItems.has(cartItem.itemId)}
                       className="bg-gray-200 text-gray-600 p-1 rounded-full hover:bg-gray-300 disabled:opacity-50 transition-colors"
                     >
                       <FaMinus className="text-xs" />
@@ -143,11 +143,11 @@ function Cart({ isOpen, onClose }) {
                     <button
                       onClick={() =>
                         handleQuantityChange(
-                          cartItem.item._id,
+                          cartItem.itemId,
                           cartItem.quantity + 1
                         )
                       }
-                      disabled={updatingItems.has(cartItem.item._id)}
+                      disabled={updatingItems.has(cartItem.itemId)}
                       className="bg-[#3399df] text-white p-1 rounded-full hover:bg-blue-600 disabled:opacity-50 transition-colors"
                     >
                       <FaPlus className="text-xs" />
@@ -156,7 +156,7 @@ function Cart({ isOpen, onClose }) {
 
                   <div className="text-right">
                     <p className="font-bold text-[#3399df]">
-                      ${(cartItem.price * cartItem.quantity).toFixed(2)}
+                      ${cartItem.subtotal?.toFixed(2) || (cartItem.price * cartItem.quantity).toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-500">
                       ${cartItem.price} each
@@ -164,8 +164,8 @@ function Cart({ isOpen, onClose }) {
                   </div>
 
                   <button
-                    onClick={() => handleRemoveItem(cartItem.item._id)}
-                    disabled={updatingItems.has(cartItem.item._id)}
+                    onClick={() => handleRemoveItem(cartItem.itemId)}
+                    disabled={updatingItems.has(cartItem.itemId)}
                     className="text-red-500 hover:text-red-700 disabled:opacity-50 transition-colors"
                   >
                     <FaTrash />
@@ -177,7 +177,7 @@ function Cart({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        {cart?.items && cart.items.length > 0 && (
+        {((cart?.cartItems && cart.cartItems.length > 0) || (cart?.items && cart.items.length > 0)) && (
           <div className="border-t p-4">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-bold">Tổng cộng:</span>

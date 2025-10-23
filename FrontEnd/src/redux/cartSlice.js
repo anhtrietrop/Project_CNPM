@@ -121,6 +121,37 @@ const cartSlice = createSlice({
       state.items = savedCart.items;
       state.totalAmount = savedCart.totalAmount;
     },
+
+    // Set cart từ backend
+    setCart: (state, action) => {
+      // Handle both old and new structure
+      if (action.payload.cartItems) {
+        state.cartItems = action.payload.cartItems;
+      } else if (action.payload.items) {
+        // Migrate from old structure
+        state.cartItems = action.payload.items.map(item => ({
+          cartItemId: item.cartItemId || new Date().getTime(),
+          itemId: item.itemId || item.item._id,
+          quantity: item.quantity,
+          note: item.note || "",
+          addedAt: item.addedAt || new Date(),
+          itemName: item.itemName || item.item.name,
+          itemImage: item.itemImage || item.item.image,
+          itemCategory: item.itemCategory || item.item.category,
+          itemFoodType: item.itemFoodType || item.item.foodType,
+          price: item.price,
+          subtotal: item.subtotal || (item.price * item.quantity),
+          shopId: item.shopId || item.shop._id,
+          shopName: item.shopName || item.shop.name,
+          shopCity: item.shopCity || item.shop.city,
+          shopState: item.shopState || item.shop.state,
+          shopAddress: item.shopAddress || item.shop.address,
+        }));
+      } else {
+        state.cartItems = [];
+      }
+      state.totalAmount = action.payload.totalAmount || 0;
+    },
   },
 });
 
@@ -130,6 +161,7 @@ export const {
   removeFromCart,
   clearCart,
   loadCart,
+  setCart,
 } = cartSlice.actions;
 
 export default cartSlice;

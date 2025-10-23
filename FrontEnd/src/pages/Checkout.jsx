@@ -24,6 +24,7 @@ import {
 import useCart from "../hooks/useCart";
 import { useSelector } from "react-redux";
 import axios from "axios";
+import { serverURL } from "../App.jsx";
 
 // Fix marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -267,24 +268,25 @@ const Checkout = () => {
       setError(null);
 
       const orderData = {
-        userId: currentUser?.id || null,
-        items: cart,
-        shippingAddress: {
+        items: cart.cartItems || cart.items,
+        totalAmount: cart.totalAmount,
+        deliveryAddress: {
           address,
           city,
           coordinates: mapPosition,
+          note: notes,
         },
-        contact: {
+        contactInfo: {
           name: contactName,
           phone: contactPhone,
           email: contactEmail,
         },
         paymentMethod,
-        notes,
-        totalPrice: getTotalPrice(),
       };
 
-      const response = await axios.post("/api/orders", orderData);
+      const response = await axios.post(`${serverURL}/api/order/create`, orderData, {
+        withCredentials: true,
+      });
 
       if (response.data) {
         alert("Đặt hàng thành công!");
@@ -324,16 +326,16 @@ const Checkout = () => {
           <h3 className="text-lg font-medium text-gray-700 mb-4">
             Sản phẩm trong giỏ hàng
           </h3>
-          {cart?.items && cart.items.length > 0 ? (
+          {((cart?.cartItems && cart.cartItems.length > 0) || (cart?.items && cart.items.length > 0)) ? (
             <div className="space-y-3">
-              {cart.items.map((cartItem) => (
+              {(cart.cartItems || cart.items || []).map((cartItem) => (
                 <div
-                  key={cartItem.item._id}
+                  key={cartItem.itemId}
                   className="flex items-center gap-4 p-3 border rounded-lg"
                 >
                   <img
-                    src={cartItem.item.image}
-                    alt={cartItem.item.name}
+                    src={cartItem.itemImage}
+                    alt={cartItem.itemName}
                     className="w-16 h-16 object-cover rounded-lg"
                     onError={(e) => {
                       e.target.src = "https://via.placeholder.com/64x64?text=No+Image";
@@ -341,18 +343,18 @@ const Checkout = () => {
                   />
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-800">
-                      {cartItem.item.name}
+                      {cartItem.itemName}
                     </h4>
                     <p className="text-sm text-gray-500">
                       Số lượng: {cartItem.quantity}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Shop: {cartItem.item.shop?.name}
+                      Shop: {cartItem.shopName}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-[#3399df]">
-                      ${(cartItem.item.price * cartItem.quantity).toFixed(2)}
+                      ${cartItem.subtotal?.toFixed(2) || (cartItem.price * cartItem.quantity).toFixed(2)}
                     </p>
                   </div>
                 </div>

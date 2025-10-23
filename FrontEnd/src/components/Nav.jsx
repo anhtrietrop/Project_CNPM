@@ -122,10 +122,13 @@ function Nav() {
           </>
         ) : (
           <>
-            <div className="relative cursor-pointer" onClick={() => setShowCart(true)}>
+            <div
+              className="relative cursor-pointer"
+              onClick={() => setShowCart(true)}
+            >
               <FiShoppingCart size={25} className="text-[#3399df]" />
               <span className="absolute right-[-9px] top-[-12px] text-[#3399df] bg-white rounded-full px-1 text-xs font-bold">
-                {cart?.items?.length || 0}
+                {cart?.cartItems?.length || 0}
               </span>
             </div>
 
@@ -161,17 +164,20 @@ function Nav() {
           </div>
         )}
       </div>
-      
+
       {/* Cart Modal */}
-      <Cart 
-        key={cart?.items?.length || 0} 
-        isOpen={showCart} 
-        onClose={() => setShowCart(false)} 
-        cart={cart} 
+      <Cart
+        key={cart?.cartItems?.length || 0}
+        isOpen={showCart}
+        onClose={() => setShowCart(false)}
+        cart={cart}
       />
-      
+
       {/* Search Modal */}
-      <Search isOpen={showSearchModal} onClose={() => setShowSearchModal(false)} />
+      <Search
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+      />
     </div>
   );
 }
