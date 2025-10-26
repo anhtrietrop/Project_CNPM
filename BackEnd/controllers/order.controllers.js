@@ -349,10 +349,30 @@ export const updateShopOrderStatus = async (req, res) => {
     if (status === "completed") {
       order.deliveredAt = new Date();
       order.paymentStatus = "paid";
+      
+      // Nếu có drone được giao, cập nhật lại trạng thái và pin của drone
+      if (order.drone) {
+        const drone = await Drone.findById(order.drone);
+        if (drone) {
+          drone.status = "available";
+          // Cập nhật pin drone theo mức pin cuối cùng trong order, không phải 100%
+          drone.battery.current = order.droneBatteryPercentage || 100;
+          await drone.save();
+        }
+      }
     } else if (status === "cancelled") {
       order.cancelledAt = new Date();
       if (!order.cancelReason) {
         order.cancelReason = "Cancelled by shop owner";
+      }
+      
+      // Nếu đơn bị hủy và có drone, trả drone về available
+      if (order.drone) {
+        const drone = await Drone.findById(order.drone);
+        if (drone) {
+          drone.status = "available";
+          await drone.save();
+        }
       }
     }
 
@@ -450,6 +470,7 @@ export const assignDroneToOrder = async (req, res) => {
 
     // Cập nhật order và drone
     order.drone = droneId;
+    order.droneBatteryPercentage = drone.battery?.current || 100;
     order.orderStatus = "delivering";
     await order.save();
 
@@ -467,6 +488,73 @@ export const assignDroneToOrder = async (req, res) => {
     console.error("Assign drone to order error:", error);
     return res.status(500).json({
       message: `Assign drone to order error: ${error.message}`,
+    });
+  }
+};
+
+// Cập nhật phần trăm pin của drone trong order
+export const updateDroneBattery = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { batteryPercentage } = req.body;
+
+    // Validation
+    if (batteryPercentage === undefined || batteryPercentage === null) {
+      return res.status(400).json({ message: "Battery percentage is required" });
+    }
+
+    if (batteryPercentage < 0 || batteryPercentage > 100) {
+      return res.status(400).json({ 
+        message: "Battery percentage must be between 0 and 100" 
+      });
+    }
+
+    // Tìm order
+    const order = await Order.findOne({
+      _id: orderId,
+      "orderItems.shopOwnerId": req.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found or you don't have permission",
+      });
+    }
+
+    // Kiểm tra order phải có drone được assign
+    if (!order.drone) {
+      return res.status(400).json({
+        message: "No drone assigned to this order",
+      });
+    }
+
+    // Kiểm tra order phải đang delivering
+    if (order.orderStatus !== "delivering") {
+      return res.status(400).json({
+        message: "Can only update battery for orders in delivering status",
+      });
+    }
+
+    // Cập nhật battery percentage trong order
+    order.droneBatteryPercentage = batteryPercentage;
+    await order.save();
+
+    // Cập nhật battery trong drone model
+    const drone = await Drone.findById(order.drone);
+    if (drone) {
+      drone.battery.current = Number(batteryPercentage);
+      await drone.save();
+    }
+
+    return res.status(200).json({
+      message: "Drone battery updated successfully",
+      order,
+      droneBatteryPercentage: order.droneBatteryPercentage,
+    });
+  } catch (error) {
+    console.error("Update drone battery error:", error);
+    return res.status(500).json({
+      message: `Update drone battery error: ${error.message}`,
     });
   }
 };

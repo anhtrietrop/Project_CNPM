@@ -297,19 +297,77 @@ export const deleteDrone = async (req, res) => {
       });
     }
 
-    if (drone.status === "busy") {
-      return res.status(400).json({
+    // Kiểm tra quyền: phải là shop owner
+    const shop = await Shop.findOne({ _id: drone.shop, owner: req.userId });
+    if (!shop) {
+      return res.status(403).json({
         success: false,
-        message: "Không thể xóa drone đang hoạt động",
+        message: "Bạn không có quyền xóa drone này",
       });
     }
 
-    // Soft delete
+    // Soft delete - không kiểm tra status busy nữa
     await Drone.findByIdAndUpdate(droneId, { isActive: false });
 
     res.status(200).json({
       success: true,
       message: "Drone đã được xóa thành công",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
+// Cập nhật battery của drone
+export const updateDroneBattery = async (req, res) => {
+  try {
+    const { droneId } = req.params;
+    const { batteryPercentage } = req.body;
+
+    // Validation
+    if (batteryPercentage === undefined || batteryPercentage === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Battery percentage is required",
+      });
+    }
+
+    if (batteryPercentage < 0 || batteryPercentage > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Battery percentage must be between 0 and 100",
+      });
+    }
+
+    const drone = await Drone.findById(droneId);
+    if (!drone) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy drone",
+      });
+    }
+
+    // Kiểm tra quyền: phải là shop owner của drone
+    const shop = await Shop.findOne({ _id: drone.shop, owner: req.userId });
+    if (!shop) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền cập nhật drone này",
+      });
+    }
+
+    // Cập nhật battery
+    drone.battery.current = Number(batteryPercentage);
+    await drone.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật pin drone thành công",
+      data: drone,
     });
   } catch (error) {
     res.status(500).json({

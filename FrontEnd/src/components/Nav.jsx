@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import Cart from "./Cart.jsx";
 import useCart from "../hooks/useCart.jsx";
 import Search from "./Search.jsx";
+import NotificationDropdown from "./NotificationDropdown.jsx";
 function Nav() {
   const { userData, currentCity } = useSelector((state) => state.user);
   const { myShopData } = useSelector((state) => state.owner);
@@ -131,6 +132,9 @@ function Nav() {
                 {cart?.cartItems?.length || 0}
               </span>
             </div>
+
+            {/* Notification Dropdown */}
+            <NotificationDropdown />
 
             <button className="hidden md:block px-3 py-1 rounded-lg bg-[#3399df]/10 text-[#3399df] text-sm font-medium ">
               My Orders

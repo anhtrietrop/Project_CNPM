@@ -10,6 +10,7 @@ import {
   updateShopOrderStatus,
   getAvailableDrones,
   assignDroneToOrder,
+  updateDroneBattery,
 } from "../controllers/order.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 
@@ -24,6 +25,7 @@ router.get("/shop/:orderId", getShopOrderById);
 router.put("/shop/:orderId/status", updateShopOrderStatus);
 router.get("/shop/:orderId/available-drones", getAvailableDrones);
 router.post("/shop/:orderId/assign-drone", assignDroneToOrder);
+router.put("/shop/:orderId/drone-battery", updateDroneBattery);
 
 // Tạo đơn hàng mới
 router.post("/", createOrder);
