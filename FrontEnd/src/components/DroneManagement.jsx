@@ -26,6 +26,9 @@ const DroneManagement = () => {
     model: "",
     serialNumber: "",
   });
+  const [showBatteryModal, setShowBatteryModal] = useState(false);
+  const [selectedDrone, setSelectedDrone] = useState(null);
+  const [batteryPercentage, setBatteryPercentage] = useState(100);
 
   useEffect(() => {
     fetchDrones();
@@ -116,6 +119,41 @@ const DroneManagement = () => {
       model: "",
       serialNumber: "",
     });
+  };
+
+  const handleOpenBatteryModal = (drone) => {
+    setSelectedDrone(drone);
+    setBatteryPercentage(drone.battery.current);
+    setShowBatteryModal(true);
+  };
+
+  const handleUpdateBattery = async () => {
+    if (!selectedDrone) return;
+
+    if (batteryPercentage < 0 || batteryPercentage > 100) {
+      alert("Phần trăm pin phải từ 0 đến 100!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      await axios.put(
+        `${serverURL}/api/drone/${selectedDrone._id}/battery`,
+        { batteryPercentage: Number(batteryPercentage) },
+        { withCredentials: true }
+      );
+
+      alert("Cập nhật pin drone thành công!");
+      setShowBatteryModal(false);
+      setSelectedDrone(null);
+      fetchDrones();
+    } catch (err) {
+      console.error("Error updating drone battery:", err);
+      alert(err.response?.data?.message || "Lỗi khi cập nhật pin drone!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -219,7 +257,11 @@ const DroneManagement = () => {
                     {getStatusIcon(drone.status)}
                     <span>{getStatusLabel(drone.status)}</span>
                   </span>
-                  <div className="flex items-center gap-1 text-lg">
+                  <div 
+                    className="flex items-center gap-1 text-lg cursor-pointer hover:opacity-70 transition-opacity"
+                    onClick={() => handleOpenBatteryModal(drone)}
+                    title="Click để cập nhật pin"
+                  >
                     {getBatteryIcon(drone.battery.current)}
                     <span className="text-sm font-medium">{drone.battery.current}%</span>
                   </div>
@@ -237,7 +279,6 @@ const DroneManagement = () => {
                   <button
                     onClick={() => handleDelete(drone._id)}
                     className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm font-medium flex items-center justify-center gap-1"
-                    disabled={drone.status === "busy"}
                   >
                     <FaTrash />
                     Xóa
@@ -316,6 +357,102 @@ const DroneManagement = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Battery Update Modal */}
+      {showBatteryModal && selectedDrone && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                {getBatteryIcon(batteryPercentage)}
+                Cập nhật Pin Drone
+              </h3>
+
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-2">
+                  Drone: <span className="font-semibold">{selectedDrone.model}</span>
+                </p>
+                <p className="text-sm text-gray-600 mb-2">
+                  SN: <span className="font-semibold">{selectedDrone.serialNumber}</span>
+                </p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Pin hiện tại: <span className={`font-semibold ${
+                    selectedDrone.battery.current >= 70 
+                      ? "text-green-600" 
+                      : selectedDrone.battery.current >= 30 
+                      ? "text-yellow-600" 
+                      : "text-red-600"
+                  }`}>
+                    {selectedDrone.battery.current}%
+                  </span>
+                </p>
+
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phần trăm pin mới (0-100%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={batteryPercentage}
+                  onChange={(e) => setBatteryPercentage(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#3399df] text-lg font-semibold text-center"
+                  placeholder="Nhập % pin"
+                />
+
+                {/* Visual Battery Indicator */}
+                <div className="mt-4 bg-gray-200 h-8 rounded-full overflow-hidden relative">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      batteryPercentage >= 70
+                        ? "bg-green-500"
+                        : batteryPercentage >= 30
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                    }`}
+                    style={{ width: `${Math.min(Math.max(batteryPercentage, 0), 100)}%` }}
+                  ></div>
+                  <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-700">
+                    {batteryPercentage}%
+                  </div>
+                </div>
+
+                {/* Warning Messages */}
+                {batteryPercentage < 20 && (
+                  <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+                    ⚠️ Cảnh báo: Pin thấp! Cần sạc ngay
+                  </div>
+                )}
+                {batteryPercentage >= 20 && batteryPercentage < 30 && (
+                  <div className="mt-3 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded-lg text-sm">
+                    ⚠️ Lưu ý: Pin đang ở mức thấp
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowBatteryModal(false);
+                    setSelectedDrone(null);
+                  }}
+                  disabled={loading}
+                  className="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 font-medium disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleUpdateBattery}
+                  disabled={loading || batteryPercentage < 0 || batteryPercentage > 100}
+                  className="flex-1 bg-[#3399df] text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Đang cập nhật..." : "Xác nhận"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

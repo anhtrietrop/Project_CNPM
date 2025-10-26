@@ -11,7 +11,11 @@ import {
   FaUtensils,
   FaMapMarkerAlt,
   FaPhone,
-  FaEnvelope
+  FaEnvelope,
+  FaBatteryFull,
+  FaBatteryHalf,
+  FaBatteryQuarter,
+  FaEdit
 } from "react-icons/fa";
 import Loading from "./Loading.jsx";
 
@@ -24,6 +28,9 @@ const MyOrders = () => {
   const [availableDrones, setAvailableDrones] = useState([]);
   const [loadingDrones, setLoadingDrones] = useState(false);
   const [selectedDrone, setSelectedDrone] = useState(null);
+  const [showBatteryModal, setShowBatteryModal] = useState(false);
+  const [batteryPercentage, setBatteryPercentage] = useState(100);
+  const [selectedOrderForBattery, setSelectedOrderForBattery] = useState(null);
 
   const statusOptions = [
     { value: "", label: "Tất cả", icon: FaShoppingBag, color: "gray" },
@@ -83,7 +90,9 @@ const MyOrders = () => {
       );
 
       alert("Cập nhật trạng thái đơn hàng thành công!");
-      refetchOrders();
+      
+      // Refetch orders để cập nhật UI
+      await refetchOrders();
     } catch (err) {
       console.error("Error updating order status:", err);
       alert(err.response?.data?.message || "Lỗi khi cập nhật trạng thái đơn hàng!");
@@ -134,6 +143,49 @@ const MyOrders = () => {
     } finally {
       setUpdatingOrderId(null);
     }
+  };
+
+  const handleOpenBatteryModal = (order) => {
+    setSelectedOrderForBattery(order);
+    setBatteryPercentage(order.droneBatteryPercentage || 100);
+    setShowBatteryModal(true);
+  };
+
+  const handleUpdateBattery = async () => {
+    if (!selectedOrderForBattery) return;
+
+    if (batteryPercentage < 0 || batteryPercentage > 100) {
+      alert("Phần trăm pin phải từ 0 đến 100!");
+      return;
+    }
+
+    try {
+      setUpdatingOrderId(selectedOrderForBattery._id);
+      
+      await axios.put(
+        `${serverURL}/api/order/shop/${selectedOrderForBattery._id}/drone-battery`,
+        { batteryPercentage: Number(batteryPercentage) },
+        { withCredentials: true }
+      );
+
+      alert("Cập nhật pin drone thành công!");
+      setShowBatteryModal(false);
+      setSelectedOrderForBattery(null);
+      
+      // Refetch orders để cập nhật UI
+      await refetchOrders();
+    } catch (err) {
+      console.error("Error updating drone battery:", err);
+      alert(err.response?.data?.message || "Lỗi khi cập nhật pin drone!");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const getBatteryIcon = (battery) => {
+    if (battery >= 70) return <FaBatteryFull className="text-green-600" />;
+    if (battery >= 30) return <FaBatteryHalf className="text-yellow-600" />;
+    return <FaBatteryQuarter className="text-red-600" />;
   };
 
   const formatDate = (dateString) => {
@@ -268,6 +320,38 @@ const MyOrders = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Drone Battery Info - Hiển thị khi đang delivering */}
+                {order.orderStatus === "delivering" && order.drone && (
+                  <div className="mb-4 bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">
+                          {getBatteryIcon(order.droneBatteryPercentage || 100)}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-800">Pin Drone</h4>
+                          <p className={`text-lg font-bold ${
+                            order.droneBatteryPercentage >= 70 
+                              ? "text-green-600" 
+                              : order.droneBatteryPercentage >= 30 
+                              ? "text-yellow-600" 
+                              : "text-red-600"
+                          }`}>
+                            {order.droneBatteryPercentage || 100}%
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleOpenBatteryModal(order)}
+                        className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      >
+                        <FaEdit />
+                        Cập nhật Pin
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Order Items - Chỉ hiển thị items của shop này */}
                 <div className="mb-4">
@@ -467,6 +551,93 @@ const MyOrders = () => {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Battery Update Modal */}
+      {showBatteryModal && selectedOrderForBattery && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                {getBatteryIcon(batteryPercentage)}
+                Cập nhật Pin Drone
+              </h3>
+
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-2">
+                  Đơn hàng: <span className="font-semibold">#{selectedOrderForBattery._id.slice(-8)}</span>
+                </p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Pin hiện tại: <span className="font-semibold text-purple-600">
+                    {selectedOrderForBattery.droneBatteryPercentage || 100}%
+                  </span>
+                </p>
+
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phần trăm pin mới (0-100%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={batteryPercentage}
+                  onChange={(e) => setBatteryPercentage(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 text-lg font-semibold text-center"
+                  placeholder="Nhập % pin"
+                />
+
+                {/* Visual Battery Indicator */}
+                <div className="mt-4 bg-gray-200 h-8 rounded-full overflow-hidden relative">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      batteryPercentage >= 70
+                        ? "bg-green-500"
+                        : batteryPercentage >= 30
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                    }`}
+                    style={{ width: `${Math.min(Math.max(batteryPercentage, 0), 100)}%` }}
+                  ></div>
+                  <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-700">
+                    {batteryPercentage}%
+                  </div>
+                </div>
+
+                {/* Warning Messages */}
+                {batteryPercentage < 20 && (
+                  <div className="mt-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+                    ⚠️ Cảnh báo: Pin thấp! Cần sạc hoặc thay drone
+                  </div>
+                )}
+                {batteryPercentage >= 20 && batteryPercentage < 30 && (
+                  <div className="mt-3 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded-lg text-sm">
+                    ⚠️ Lưu ý: Pin đang ở mức thấp
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowBatteryModal(false);
+                    setSelectedOrderForBattery(null);
+                  }}
+                  disabled={updatingOrderId}
+                  className="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 font-medium disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleUpdateBattery}
+                  disabled={updatingOrderId || batteryPercentage < 0 || batteryPercentage > 100}
+                  className="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {updatingOrderId ? "Đang cập nhật..." : "Xác nhận"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

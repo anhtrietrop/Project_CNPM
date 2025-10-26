@@ -8,6 +8,7 @@ import {
   updateDroneLocation,
   updateDroneStatus,
   deleteDrone,
+  updateDroneBattery,
 } from "../controllers/drone.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 
@@ -36,6 +37,9 @@ router.put("/:droneId/location", updateDroneLocation);
 
 // Cập nhật trạng thái drone
 router.put("/:droneId/status", updateDroneStatus);
+
+// Cập nhật battery drone
+router.put("/:droneId/battery", updateDroneBattery);
 
 // Xóa drone
 router.delete("/:droneId", deleteDrone);

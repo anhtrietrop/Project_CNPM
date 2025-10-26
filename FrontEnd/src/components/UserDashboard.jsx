@@ -4,15 +4,18 @@ import { categories } from "../category"; // Đã sửa đường dẫn
 import CategoryCard from "./CategoryCard";
 import ShopCard from "./ShopCard";
 import FoodItemCard from "./FoodItemCard";
+import UserOrders from "./UserOrders";
 import { useSelector } from "react-redux";
-import { IoIosArrowDropleftCircle } from "react-icons/io";
+import { IoIosArrowDropleftCircle, IoIosNotifications } from "react-icons/io";
 import { FaCircleChevronRight } from "react-icons/fa6";
+import { FaHome } from "react-icons/fa";
 import useGetShopByCity from "../hooks/useGetShopByCity";
 import useGetSuggestedItems from "../hooks/useGetSuggestedItems";
 import useGetCity from "../hooks/useGetCity";
 
 function UserDashboard() {
   const { currentCity, shopInMyCity, suggestedItems } = useSelector((state) => state.user);
+  const [activeTab, setActiveTab] = useState("home"); // "home" or "orders"
   const cateScrollRef = useRef();
   const shopScrollRef = useRef();
   const foodScrollRef = useRef();
@@ -136,7 +139,41 @@ function UserDashboard() {
   return (
     <div className=" w-screen min-h-screen flex flex-col items-center bg-[#fff9f6] overflow-y-auto">
       <Nav />
-      <div className="w-full max-w-6xl flex flex-col gap-5 items-start p-[10px]">
+      
+      {/* Tabs */}
+      <div className="w-full max-w-6xl px-4 mt-6">
+        <div className="flex gap-4 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("home")}
+            className={`px-6 py-3 font-medium transition-all flex items-center gap-2 ${
+              activeTab === "home"
+                ? "text-[#3399df] border-b-2 border-[#3399df]"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            <FaHome />
+            Trang chủ
+          </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`px-6 py-3 font-medium transition-all flex items-center gap-2 ${
+              activeTab === "orders"
+                ? "text-[#3399df] border-b-2 border-[#3399df]"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            <IoIosNotifications className="text-xl" />
+            Đơn hàng của tôi
+          </button>
+        </div>
+      </div>
+
+      {/* Content based on active tab */}
+      {activeTab === "orders" ? (
+        <UserOrders />
+      ) : (
+        <>
+          <div className="w-full max-w-6xl flex flex-col gap-5 items-start p-[10px]">
         <h1 className="text-gray-800 text-2xl sm:text-3xl">
           Inspiration for you first order
         </h1>
@@ -229,6 +266,8 @@ function UserDashboard() {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

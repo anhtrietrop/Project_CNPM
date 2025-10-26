@@ -148,6 +148,12 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Drone",
     },
+    droneBatteryPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 100,
+    },
     estimatedDeliveryTime: {
       type: Date,
     },
