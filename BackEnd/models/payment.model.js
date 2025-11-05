@@ -2,66 +2,59 @@ import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema(
   {
-    order: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
-      required: true,
-    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: false, // Không bắt buộc vì order chỉ tạo sau khi thanh toán thành công
+    },
     amount: {
       type: Number,
       required: true,
-      min: 0,
     },
-    method: {
+    paymentMethod: {
       type: String,
-      enum: ["cash", "card", "momo", "zalopay", "bank_transfer"],
+      enum: ["vnpay", "momo", "zalopay", "cod", "bank_transfer"],
       required: true,
     },
     status: {
       type: String,
-      enum: ["pending", "processing", "completed", "failed", "refunded"],
+      enum: ["pending", "success", "failed", "refunded", "cancelled"],
       default: "pending",
     },
     transactionId: {
       type: String,
-      unique: true,
-      sparse: true, // Cho phép null/undefined nhưng unique khi có giá trị
+      default: "",
     },
-    paymentDetails: {
-      cardNumber: {
-        type: String,
-        select: false, // Không trả về trong query mặc định
-      },
-      bankCode: String,
-      momoAccount: String,
-      // Thêm các field khác tùy theo phương thức thanh toán
-    },
-    processedAt: {
-      type: Date,
-    },
-    failedReason: {
+    bankCode: {
       type: String,
+      default: "",
     },
-    refundAmount: {
-      type: Number,
-      default: 0,
+    payDate: {
+      type: String,
+      default: "",
     },
-    refundedAt: {
-      type: Date,
+    failureReason: {
+      type: String,
+      default: "",
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed, // Lưu thông tin order tạm thời
+      default: {},
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// Index để tìm kiếm nhanh
-paymentSchema.index({ order: 1 });
+// Index cho tìm kiếm nhanh
 paymentSchema.index({ user: 1, createdAt: -1 });
-paymentSchema.index({ status: 1 });
+paymentSchema.index({ order: 1 });
 paymentSchema.index({ transactionId: 1 });
 
 const Payment = mongoose.model("Payment", paymentSchema);

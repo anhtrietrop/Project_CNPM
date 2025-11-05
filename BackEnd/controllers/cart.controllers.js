@@ -157,12 +157,10 @@ export const addToCart = async (req, res) => {
         cart.cartItems.push(newCartItem);
       } catch (itemError) {
         console.error("Error creating cart item:", itemError);
-        return res
-          .status(500)
-          .json({
-            message: "Error creating cart item",
-            error: itemError.message,
-          });
+        return res.status(500).json({
+          message: "Error creating cart item",
+          error: itemError.message,
+        });
       }
     }
 
@@ -209,7 +207,8 @@ export const updateCartItem = async (req, res) => {
     }
 
     cart.cartItems[itemIndex].quantity = quantity;
-    cart.cartItems[itemIndex].subtotal = cart.cartItems[itemIndex].price * quantity;
+    cart.cartItems[itemIndex].subtotal =
+      cart.cartItems[itemIndex].price * quantity;
     await cart.save();
 
     return res.status(200).json(cart);

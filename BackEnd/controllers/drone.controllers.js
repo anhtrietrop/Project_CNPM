@@ -4,10 +4,7 @@ import Shop from "../models/shop.model.js";
 // Tạo drone mới
 export const createDrone = async (req, res) => {
   try {
-    const {
-      model,
-      serialNumber,
-    } = req.body;
+    const { model, serialNumber } = req.body;
 
     // Tìm shop của user hiện tại
     const shop = await Shop.findOne({ owner: req.userId });
@@ -137,8 +134,10 @@ export const getDroneById = async (req, res) => {
   try {
     const { droneId } = req.params;
 
-    const drone = await Drone.findById(droneId)
-      .populate("shop", "name city address");
+    const drone = await Drone.findById(droneId).populate(
+      "shop",
+      "name city address"
+    );
 
     if (!drone) {
       return res.status(404).json({
@@ -175,10 +174,13 @@ export const updateDrone = async (req, res) => {
     }
 
     // Kiểm tra serial number trùng lặp (nếu có thay đổi)
-    if (updateData.serialNumber && updateData.serialNumber !== drone.serialNumber) {
-      const existingDrone = await Drone.findOne({ 
+    if (
+      updateData.serialNumber &&
+      updateData.serialNumber !== drone.serialNumber
+    ) {
+      const existingDrone = await Drone.findOne({
         serialNumber: updateData.serialNumber,
-        _id: { $ne: droneId }
+        _id: { $ne: droneId },
       });
       if (existingDrone) {
         return res.status(400).json({
@@ -188,11 +190,10 @@ export const updateDrone = async (req, res) => {
       }
     }
 
-    const updatedDrone = await Drone.findByIdAndUpdate(
-      droneId,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const updatedDrone = await Drone.findByIdAndUpdate(droneId, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({
       success: true,
@@ -231,7 +232,10 @@ export const updateDroneLocation = async (req, res) => {
           altitude,
           lastUpdated: new Date(),
         },
-        battery: { ...drone.battery, current: battery || drone.battery.current },
+        battery: {
+          ...drone.battery,
+          current: battery || drone.battery.current,
+        },
       },
       { new: true }
     );
@@ -377,3 +381,4 @@ export const updateDroneBattery = async (req, res) => {
     });
   }
 };
+

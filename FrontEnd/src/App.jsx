@@ -5,6 +5,7 @@ import SignUp from "./pages/SignUp.jsx";
 import Home from "./pages/Home.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import Checkout from "./pages/Checkout.jsx";
+import PaymentReturn from "./pages/PaymentReturn.jsx";
 import useGetCurrentUser from "./hooks/useGetCurrentUser.jsx";
 import { useSelector } from "react-redux";
 import useGetCity from "./hooks/useGetCity.jsx";
@@ -57,6 +58,10 @@ function App() {
       <Route
         path="/checkout"
         element={userData ? <Checkout /> : <Navigate to={"/signin"} />}
+      />
+      <Route
+        path="/payment-return"
+        element={userData ? <PaymentReturn /> : <Navigate to={"/signin"} />}
       />
     </Routes>
   );

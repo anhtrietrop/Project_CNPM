@@ -4,7 +4,7 @@ import Item from "../models/item.model.js";
 
 export const addItem = async (req, res) => {
   try {
-    const { name, category, foodType, price } = req.body;
+    const { name, category, foodType, price, stock } = req.body;
 
     // Validation
     if (!name || !category || !price) {
@@ -39,6 +39,10 @@ export const addItem = async (req, res) => {
       price,
       image,
       shop: shop._id,
+      stock:
+        stock !== undefined && stock !== null && stock !== ""
+          ? Number(stock)
+          : 100,
     });
 
     shop.items.push(item._id);
@@ -61,7 +65,7 @@ export const addItem = async (req, res) => {
 export const editItem = async (req, res) => {
   try {
     const itemId = req.params.itemId;
-    const { name, category, foodType, price } = req.body;
+    const { name, category, foodType, price, stock } = req.body;
     let image;
     if (req.file) {
       image = await uploadOnCloudinary(req.file.path);
@@ -69,17 +73,25 @@ export const editItem = async (req, res) => {
         return res.status(500).json({ message: "Failed to upload image" });
       }
     }
-    const item = await Item.findByIdAndUpdate(
-      itemId,
-      {
-        name,
-        category,
-        foodType,
-        price,
-        image,
-      },
-      { new: true }
-    );
+
+    const updateData = {
+      name,
+      category,
+      foodType,
+      price,
+    };
+
+    if (image) {
+      updateData.image = image;
+    }
+
+    if (stock !== undefined && stock !== null && stock !== "") {
+      updateData.stock = Number(stock);
+    }
+
+    const item = await Item.findByIdAndUpdate(itemId, updateData, {
+      new: true,
+    });
     if (!item) {
       return res.status(400).json({ message: "item not found" });
     }
@@ -226,5 +238,35 @@ export const getItemsByCategory = async (req, res) => {
     return res
       .status(500)
       .json({ message: `Get items by category error: ${error.message}` });
+  }
+};
+
+// Cập nhật stock của item
+export const updateItemStock = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { stock } = req.body;
+
+    if (stock === undefined || stock < 0) {
+      return res.status(400).json({ message: "Invalid stock value" });
+    }
+
+    const item = await Item.findByIdAndUpdate(itemId, { stock }, { new: true });
+
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    const shop = await Shop.findOne({ owner: req.userId }).populate({
+      path: "items",
+      options: { sort: { updatedAt: -1 } },
+    });
+
+    return res.status(200).json(shop);
+  } catch (error) {
+    console.error("Update item stock error:", error);
+    return res
+      .status(500)
+      .json({ message: `Update item stock error: ${error.message}` });
   }
 };

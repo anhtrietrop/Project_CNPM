@@ -237,3 +237,4 @@ export const getLocationStats = async (req, res) => {
     });
   }
 };
+

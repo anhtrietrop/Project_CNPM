@@ -1,14 +1,32 @@
+import {
+  createVNPayUrl,
+  verifyVNPayReturn,
+  vnpayResponseCodes,
+} from "../utils/vnpay.js";
 import Payment from "../models/payment.model.js";
 import Order from "../models/order.model.js";
+import Shop from "../models/shop.model.js";
+import Cart from "../models/cart.model.js";
 
-// Tạo payment mới
-export const createPayment = async (req, res) => {
+// Tạo URL thanh toán VNPay (TẠO ORDER TRƯỚC RỒI)
+export const createVNPayPaymentUrl = async (req, res) => {
   try {
-    const { orderId, amount, method, paymentDetails } = req.body;
-    const userId = req.user.id;
+    const { orderId, amount, bankCode } = req.body;
 
-    // Kiểm tra order tồn tại và thuộc về user
-    const order = await Order.findOne({ _id: orderId, user: userId });
+    console.log("========== CREATE VNPAY PAYMENT URL ==========");
+    console.log("1. Order ID:", orderId);
+    console.log("2. Amount:", amount);
+
+    // Validate input
+    if (!orderId || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "orderId và amount là bắt buộc",
+      });
+    }
+
+    // Verify order exists
+    const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -16,34 +34,280 @@ export const createPayment = async (req, res) => {
       });
     }
 
-    // Kiểm tra payment đã tồn tại cho order này
-    const existingPayment = await Payment.findOne({ order: orderId });
-    if (existingPayment) {
-      return res.status(400).json({
+    // Verify user owns this order
+    if (order.user.toString() !== req.userId) {
+      return res.status(403).json({
         success: false,
-        message: "Đơn hàng đã có thanh toán",
+        message: "Bạn không có quyền thanh toán đơn hàng này",
       });
     }
 
-    const payment = new Payment({
+    // Lấy IP address của client
+    const ipAddr =
+      req.headers["x-forwarded-for"] ||
+      req.connection.remoteAddress ||
+      req.socket.remoteAddress ||
+      req.connection.socket?.remoteAddress ||
+      "127.0.0.1";
+
+    console.log("3. Creating payment record...");
+
+    // Tạo payment record
+    const payment = await Payment.create({
+      user: req.userId,
       order: orderId,
-      user: userId,
-      amount,
-      method,
-      paymentDetails,
+      amount: amount,
+      paymentMethod: "vnpay",
+      status: "pending",
+      transactionId: `TEMP_${req.userId}_${Date.now()}`,
     });
 
-    await payment.save();
+    console.log("4. Payment created:", payment._id);
 
-    res.status(201).json({
+    // Tạo VNPay URL với orderId làm vnp_TxnRef
+    const paymentUrl = createVNPayUrl(
+      orderId, // Dùng orderId để dễ tìm order khi callback
+      amount,
+      ipAddr,
+      `Thanh toan don hang ${orderId}`,
+      bankCode || ""
+    );
+
+    console.log("5. VNPay URL created successfully");
+    console.log("===============================================");
+
+    return res.status(200).json({
       success: true,
-      message: "Thanh toán được tạo thành công",
+      message: "Tạo URL thanh toán thành công",
+      data: {
+        paymentUrl,
+        paymentId: payment._id,
+        orderId: orderId,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Create VNPay payment URL error:", error);
+    console.error("Error stack:", error.stack);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo URL thanh toán",
+      error: error.message,
+    });
+  }
+};
+
+// Xử lý return từ VNPay (sau khi user thanh toán xong)
+// UPDATE ORDER NGAY trước khi redirect về frontend
+export const vnpayReturn = async (req, res) => {
+  try {
+    const vnp_Params = req.query;
+    console.log("VNPay return callback received:", vnp_Params);
+
+    // Verify signature
+    const isValid = verifyVNPayReturn(vnp_Params);
+    if (!isValid) {
+      console.error("Invalid VNPay signature!");
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment-return?status=error&message=Invalid+signature`
+      );
+    }
+
+    const orderId = vnp_Params.vnp_TxnRef;
+    const responseCode = vnp_Params.vnp_ResponseCode;
+    const transactionNo = vnp_Params.vnp_TransactionNo;
+    const amount = vnp_Params.vnp_Amount / 100;
+    const bankCode = vnp_Params.vnp_BankCode;
+    const payDate = vnp_Params.vnp_PayDate;
+
+    // Tìm order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      console.error(`Order not found: ${orderId}`);
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment-return?status=error&message=Order+not+found`
+      );
+    }
+
+    // Tìm payment
+    const payment = await Payment.findOne({
+      order: orderId,
+      status: "pending",
+    });
+
+    if (responseCode === "00") {
+      // Thanh toán thành công
+      console.log(`Payment successful for order: ${orderId}`);
+
+      if (payment) {
+        payment.status = "success";
+        payment.transactionId = transactionNo;
+        payment.bankCode = bankCode;
+        payment.payDate = payDate;
+        await payment.save();
+      }
+
+      // CẬP NHẬT ORDER
+      order.paymentStatus = "paid";
+      order.orderStatus = "confirmed"; // Chuyển sang confirmed
+      order.transactionId = transactionNo;
+      await order.save();
+
+      console.log(
+        `Order updated: ${orderId} - Status: confirmed, Payment: paid`
+      );
+
+      // ✅ XÓA GIỎ HÀNG sau khi thanh toán thành công
+      try {
+        const cart = await Cart.findOne({ user: order.user });
+        if (cart) {
+          cart.cartItems = [];
+          cart.totalAmount = 0;
+          await cart.save();
+          console.log(`✅ Cart cleared for user: ${order.user}`);
+        }
+      } catch (cartError) {
+        console.error("Error clearing cart:", cartError);
+        // Không throw error, vì order đã thành công
+      }
+
+      // Redirect về frontend với thông tin thành công
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment-return?status=success&orderId=${orderId}&amount=${amount}&transactionNo=${transactionNo}`
+      );
+    } else {
+      // Thanh toán thất bại
+      console.log(
+        `Payment failed for order: ${orderId}, Code: ${responseCode}`
+      );
+
+      if (payment) {
+        payment.status = "failed";
+        payment.failureReason =
+          vnpayResponseCodes[responseCode] || "Giao dịch thất bại";
+        await payment.save();
+      }
+
+      order.paymentStatus = "failed";
+      await order.save();
+
+      return res.redirect(
+        `${
+          process.env.FRONTEND_URL
+        }/payment-return?status=failed&message=${encodeURIComponent(
+          vnpayResponseCodes[responseCode] || "Giao dịch thất bại"
+        )}`
+      );
+    }
+  } catch (error) {
+    console.error("VNPay return error:", error);
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/payment-return?status=error&message=System+error`
+    );
+  }
+};
+
+// ❌ REMOVED OLD FUNCTION: verifyAndUpdatePayment
+// This function creates NEW order instead of updating existing one - WRONG LOGIC!
+// Use vnpayReturn() above instead
+
+// Xử lý IPN từ VNPay (webhook)
+export const vnpayIPN = async (req, res) => {
+  try {
+    let vnp_Params = req.query;
+    const secureHash = vnp_Params["vnp_SecureHash"];
+
+    // Verify signature
+    const isValid = verifyVNPayReturn(vnp_Params);
+
+    const orderId = vnp_Params["vnp_TxnRef"];
+    const responseCode = vnp_Params["vnp_ResponseCode"];
+    const transactionNo = vnp_Params["vnp_TransactionNo"];
+    const amount = vnp_Params["vnp_Amount"] / 100;
+
+    // Tìm order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res
+        .status(200)
+        .json({ RspCode: "01", Message: "Order not found" });
+    }
+
+    // Tìm payment
+    const payment = await Payment.findOne({ order: orderId });
+    if (!payment) {
+      return res
+        .status(200)
+        .json({ RspCode: "01", Message: "Payment not found" });
+    }
+
+    // Kiểm tra số tiền
+    if (payment.amount !== amount) {
+      return res.status(200).json({ RspCode: "04", Message: "Invalid Amount" });
+    }
+
+    if (!isValid) {
+      return res
+        .status(200)
+        .json({ RspCode: "97", Message: "Invalid Checksum" });
+    }
+
+    // Kiểm tra trạng thái payment
+    if (payment.status !== "pending") {
+      return res.status(200).json({
+        RspCode: "02",
+        Message: "Order already confirmed",
+      });
+    }
+
+    if (responseCode === "00") {
+      // Thanh toán thành công
+      payment.status = "success";
+      payment.transactionId = transactionNo;
+      await payment.save();
+
+      order.paymentStatus = "paid";
+      order.paidAt = new Date();
+      await order.save();
+
+      return res.status(200).json({ RspCode: "00", Message: "Success" });
+    } else {
+      // Thanh toán thất bại
+      payment.status = "failed";
+      payment.failureReason =
+        vnpayResponseCodes[responseCode] || "Transaction failed";
+      await payment.save();
+
+      return res.status(200).json({ RspCode: "00", Message: "Success" });
+    }
+  } catch (error) {
+    console.error("VNPay IPN error:", error);
+    return res.status(200).json({ RspCode: "99", Message: "Unknown error" });
+  }
+};
+
+// Tạo payment thủ công (cho các phương thức khác)
+export const createPayment = async (req, res) => {
+  try {
+    const { orderId, amount, paymentMethod } = req.body;
+
+    const payment = await Payment.create({
+      user: req.user._id,
+      order: orderId,
+      amount,
+      paymentMethod,
+      status: "pending",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Tạo payment thành công",
       data: payment,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Create payment error:", error);
+    return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi khi tạo payment",
       error: error.message,
     });
   }
@@ -52,35 +316,19 @@ export const createPayment = async (req, res) => {
 // Lấy payments của user
 export const getUserPayments = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { page = 1, limit = 10, status } = req.query;
+    const payments = await Payment.find({ user: req.user._id })
+      .populate("order")
+      .sort({ createdAt: -1 });
 
-    const query = { user: userId };
-    if (status) {
-      query.status = status;
-    }
-
-    const payments = await Payment.find(query)
-      .populate("order", "orderStatus totalAmount")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Payment.countDocuments(query);
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: payments,
-      pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total,
-      },
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get user payments error:", error);
+    return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi khi lấy danh sách payments",
       error: error.message,
     });
   }
@@ -89,27 +337,34 @@ export const getUserPayments = async (req, res) => {
 // Lấy payment theo ID
 export const getPaymentById = async (req, res) => {
   try {
-    const { paymentId } = req.params;
-    const userId = req.user.id;
-
-    const payment = await Payment.findOne({ _id: paymentId, user: userId })
-      .populate("order", "orderStatus totalAmount items");
+    const payment = await Payment.findById(req.params.paymentId).populate(
+      "order"
+    );
 
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Không tìm thấy thanh toán",
+        message: "Không tìm thấy payment",
       });
     }
 
-    res.status(200).json({
+    // Kiểm tra quyền truy cập
+    if (payment.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền xem payment này",
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       data: payment,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Get payment by ID error:", error);
+    return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi khi lấy thông tin payment",
       error: error.message,
     });
   }
@@ -118,46 +373,29 @@ export const getPaymentById = async (req, res) => {
 // Cập nhật trạng thái payment
 export const updatePaymentStatus = async (req, res) => {
   try {
-    const { paymentId } = req.params;
-    const { status, transactionId, failedReason } = req.body;
-    const userId = req.user.id;
+    const { status } = req.body;
+    const payment = await Payment.findById(req.params.paymentId);
 
-    const payment = await Payment.findOne({ _id: paymentId, user: userId });
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Không tìm thấy thanh toán",
+        message: "Không tìm thấy payment",
       });
     }
 
-    const updateData = { status };
-    if (transactionId) updateData.transactionId = transactionId;
-    if (failedReason) updateData.failedReason = failedReason;
-    if (status === "completed") updateData.processedAt = new Date();
+    payment.status = status;
+    await payment.save();
 
-    const updatedPayment = await Payment.findByIdAndUpdate(
-      paymentId,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    // Cập nhật trạng thái order nếu payment thành công
-    if (status === "completed") {
-      await Order.findByIdAndUpdate(payment.order, {
-        paymentStatus: "paid",
-        orderStatus: "confirmed",
-      });
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Trạng thái thanh toán được cập nhật thành công",
-      data: updatedPayment,
+      message: "Cập nhật trạng thái payment thành công",
+      data: payment,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Update payment status error:", error);
+    return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi khi cập nhật trạng thái payment",
       error: error.message,
     });
   }
@@ -166,47 +404,38 @@ export const updatePaymentStatus = async (req, res) => {
 // Hoàn tiền
 export const refundPayment = async (req, res) => {
   try {
-    const { paymentId } = req.params;
-    const { refundAmount, reason } = req.body;
-    const userId = req.user.id;
+    const payment = await Payment.findById(req.params.paymentId);
 
-    const payment = await Payment.findOne({ _id: paymentId, user: userId });
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Không tìm thấy thanh toán",
+        message: "Không tìm thấy payment",
       });
     }
 
-    if (payment.status !== "completed") {
+    if (payment.status !== "success") {
       return res.status(400).json({
         success: false,
-        message: "Chỉ có thể hoàn tiền cho thanh toán đã hoàn thành",
+        message: "Chỉ có thể hoàn tiền cho giao dịch thành công",
       });
     }
 
-    const refund = Math.min(refundAmount || payment.amount, payment.amount);
+    // TODO: Implement VNPay refund API
+    // Cần gọi API refund của VNPay ở đây
 
-    const updatedPayment = await Payment.findByIdAndUpdate(
-      paymentId,
-      {
-        status: "refunded",
-        refundAmount: refund,
-        refundedAt: new Date(),
-        failedReason: reason,
-      },
-      { new: true }
-    );
+    payment.status = "refunded";
+    await payment.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Hoàn tiền thành công",
-      data: updatedPayment,
+      data: payment,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Refund payment error:", error);
+    return res.status(500).json({
       success: false,
-      message: "Lỗi server",
+      message: "Lỗi khi hoàn tiền",
       error: error.message,
     });
   }

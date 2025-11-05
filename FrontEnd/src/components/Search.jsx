@@ -16,8 +16,13 @@ function Search({ isOpen, onClose }) {
   const [showFilters, setShowFilters] = useState(false);
 
   const categories = [
-    "Burgers", "Sandwiches", "Fried", "Desserts", 
-    "Drinks", "Tacos", "Others"
+    "Burgers",
+    "Sandwiches",
+    "Fried",
+    "Desserts",
+    "Drinks",
+    "Tacos",
+    "Others",
   ];
 
   const foodTypes = ["veg", "non-veg"];
@@ -26,7 +31,7 @@ function Search({ isOpen, onClose }) {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      
+
       if (searchQuery) params.append("q", searchQuery);
       if (category) params.append("category", category);
       if (foodType) params.append("foodType", foodType);
@@ -37,7 +42,7 @@ function Search({ isOpen, onClose }) {
       const response = await axios.get(
         `${serverURL}/api/item/search?${params.toString()}`
       );
-      
+
       setResults(response.data);
     } catch (error) {
       console.error("Search error:", error);
@@ -63,7 +68,7 @@ function Search({ isOpen, onClose }) {
       const timeoutId = setTimeout(() => {
         handleSearch();
       }, 500);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [searchQuery, category, foodType, minPrice, maxPrice, city, isOpen]);
@@ -72,9 +77,9 @@ function Search({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+      <div className="bg-[#fff9f6] rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <FaSearch />
             Search Food Items
@@ -88,7 +93,7 @@ function Search({ isOpen, onClose }) {
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-gray-200 bg-white">
           <div className="flex gap-2">
             <div className="flex-1 relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -118,7 +123,7 @@ function Search({ isOpen, onClose }) {
 
         {/* Filters */}
         {showFilters && (
-          <div className="p-4 border-b bg-gray-50">
+          <div className="p-4 border-b border-gray-200 bg-white">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Category Filter */}
               <div>
@@ -223,7 +228,7 @@ function Search({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t bg-gray-50">
+        <div className="p-4 border-t border-gray-200 bg-white">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">
               {results.length} items found

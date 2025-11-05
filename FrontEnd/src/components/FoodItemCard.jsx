@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import { FaPlus, FaMinus, FaStar } from "react-icons/fa";
 import useCart from "../hooks/useCart.jsx";
+import { formatCurrency } from "../utils/formatCurrency.js";
 
 function FoodItemCard({ data }) {
   const { addItemToCart } = useCart();
   const [loading, setLoading] = useState(false);
+  const isOutOfStock = data.stock === 0;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
+
     try {
       setLoading(true);
       // Truyền full item data vào cart
@@ -38,16 +42,31 @@ function FoodItemCard({ data }) {
   // Bỏ hiển thị số lượng ở ngoài
 
   return (
-    <div className="w-[200px] h-[280px] rounded-2xl border-2 border-[#3399df] shrink-0 overflow-hidden bg-white shadow-xl shadow-gray-200 hover:shadow-lg transition-shadow relative">
-      <img
-        src={data.image}
-        alt={data.name}
-        className="w-full h-32 object-cover transform hover:scale-110 transition-transform duration-300"
-        onError={(e) => {
-          console.error("Error loading food image:", data.image);
-          e.target.style.display = "none";
-        }}
-      />
+    <div
+      className={`w-[200px] h-[280px] rounded-2xl border-2 border-[#3399df] shrink-0 overflow-hidden bg-white shadow-xl shadow-gray-200 hover:shadow-lg transition-shadow relative ${
+        isOutOfStock ? "opacity-70" : ""
+      }`}
+    >
+      <div className="relative">
+        <img
+          src={data.image}
+          alt={data.name}
+          className={`w-full h-32 object-cover transform hover:scale-110 transition-transform duration-300 ${
+            isOutOfStock ? "grayscale blur-sm" : ""
+          }`}
+          onError={(e) => {
+            console.error("Error loading food image:", data.image);
+            e.target.style.display = "none";
+          }}
+        />
+
+        {/* Out of stock overlay */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-gray-800 bg-opacity-60 flex items-center justify-center">
+            <span className="text-white font-bold text-lg">HẾT HÀNG</span>
+          </div>
+        )}
+      </div>
 
       {/* Rating display */}
       {data.rating > 0 && (
@@ -90,15 +109,21 @@ function FoodItemCard({ data }) {
         </div>
 
         <div className="flex justify-between items-center">
-          <div className="text-lg font-bold text-[#3399df]">${data.price}</div>
+          <div className="text-lg font-bold text-[#3399df]">
+            {formatCurrency(data.price)}
+          </div>
 
           {/* Cart controls - Chỉ hiển thị nút Add */}
           <button
             onClick={handleAddToCart}
-            disabled={loading}
-            className="bg-[#3399df] text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+            disabled={loading || isOutOfStock}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              isOutOfStock
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : "bg-[#3399df] text-white hover:bg-blue-600"
+            } disabled:opacity-50`}
           >
-            {loading ? "..." : "Add"}
+            {isOutOfStock ? "Hết hàng" : loading ? "..." : "Add"}
           </button>
         </div>
       </div>

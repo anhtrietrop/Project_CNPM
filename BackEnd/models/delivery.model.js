@@ -99,3 +99,4 @@ deliverySchema.index({ createdAt: -1 });
 const Delivery = mongoose.model("Delivery", deliverySchema);
 
 export default Delivery;
+

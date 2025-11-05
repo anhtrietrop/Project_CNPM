@@ -25,6 +25,7 @@ import useCart from "../hooks/useCart";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
+import { formatCurrency } from "../utils/formatCurrency.js";
 
 // Fix marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -90,8 +91,6 @@ const Checkout = () => {
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
-
-  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -164,11 +163,25 @@ const Checkout = () => {
       const searchQuery = tempCity
         ? `${tempAddress}, ${tempCity}`
         : tempAddress;
+
+      // Thêm delay để tránh rate limit
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           searchQuery
-        )}&limit=1`
+        )}&limit=1`,
+        {
+          headers: {
+            "User-Agent": "FoodDeliveryApp/1.0",
+          },
+        }
       );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data && data.length > 0) {
@@ -184,7 +197,7 @@ const Checkout = () => {
       }
     } catch (error) {
       console.error("Error searching address:", error);
-      setError("Lỗi khi tìm kiếm địa chỉ!");
+      setError("Lỗi khi tìm kiếm địa chỉ! Vui lòng thử lại sau.");
     } finally {
       setSearchingAddress(false);
     }
@@ -193,9 +206,22 @@ const Checkout = () => {
   // Reverse geocoding - Lấy địa chỉ từ tọa độ
   const getAddressFromCoordinates = async (lat, lng) => {
     try {
+      // Thêm delay để tránh rate limit
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+        {
+          headers: {
+            "User-Agent": "FoodDeliveryApp/1.0",
+          },
+        }
       );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       if (data.display_name) {
         setTempAddress(data.display_name);
@@ -208,6 +234,8 @@ const Checkout = () => {
       }
     } catch (error) {
       console.error("Error getting address:", error);
+      // Không hiển thị lỗi cho user, chỉ log
+      // User có thể tự nhập địa chỉ
     }
   };
 
@@ -220,24 +248,31 @@ const Checkout = () => {
 
     try {
       setLoading(true);
-      await getAddressFromCoordinates(mapPosition.lat, mapPosition.lng);
+      setError(null);
+
+      // Chỉ gọi API khi xác nhận, không tự động
+      if (!tempAddress) {
+        await getAddressFromCoordinates(mapPosition.lat, mapPosition.lng);
+      }
+
       setAddress(tempAddress);
       setCity(tempCity);
       setIsLocationConfirmed(true);
-      setError(null);
-    } catch (error) {
+    } catch (err) {
+      console.error("Confirm location error:", err);
       setError("Lỗi khi xác nhận vị trí!");
     } finally {
       setLoading(false);
     }
   };
 
+  // REMOVE auto-fetch address - chỉ cho phép user tự nhập hoặc tìm kiếm
   // Update temp address when map position changes (only if not confirmed)
-  useEffect(() => {
-    if (mapPosition && !isLocationConfirmed) {
-      getAddressFromCoordinates(mapPosition.lat, mapPosition.lng);
-    }
-  }, [mapPosition, isLocationConfirmed]);
+  // useEffect(() => {
+  //   if (mapPosition && !isLocationConfirmed) {
+  //     getAddressFromCoordinates(mapPosition.lat, mapPosition.lng);
+  //   }
+  // }, [mapPosition, isLocationConfirmed]);
 
   // Handle submit
   const handleSubmit = async (e) => {
@@ -267,6 +302,7 @@ const Checkout = () => {
       setLoading(true);
       setError(null);
 
+      // ✅ FLOW CŨ: Tạo order TRƯỚC
       const orderData = {
         items: cart.cartItems || cart.items,
         totalAmount: cart.totalAmount,
@@ -281,21 +317,58 @@ const Checkout = () => {
           phone: contactPhone,
           email: contactEmail,
         },
-        paymentMethod,
       };
 
-      const response = await axios.post(`${serverURL}/api/order`, orderData, {
-        withCredentials: true,
-      });
+      console.log("1. Creating order first...", orderData);
 
-      if (response.data) {
-        alert("Đặt hàng thành công!");
-        clearCart();
-        navigate("/");
+      // Tạo order trước
+      const orderResponse = await axios.post(
+        `${serverURL}/api/order`,
+        orderData,
+        { withCredentials: true }
+      );
+
+      console.log("Order response:", orderResponse.data);
+
+      if (!orderResponse.data.success) {
+        console.error("Order creation failed:", orderResponse.data);
+        throw new Error(orderResponse.data.message || "Không thể tạo đơn hàng");
+      }
+
+      const orderId = orderResponse.data.data._id;
+      console.log("2. Order created:", orderId);
+
+      // Sau đó tạo URL thanh toán VNPay với orderId
+      const paymentResponse = await axios.post(
+        `${serverURL}/api/payment/vnpay/create-payment-url`,
+        {
+          orderId: orderId, // Gửi orderId thay vì orderData
+          amount: cart.totalAmount,
+          bankCode: "", // Optional
+        },
+        { withCredentials: true }
+      );
+
+      console.log("3. Payment response:", paymentResponse.data);
+
+      if (
+        paymentResponse.data.success &&
+        paymentResponse.data.data.paymentUrl
+      ) {
+        console.log("4. Redirecting to VNPay:", paymentResponse.data.data.paymentUrl);
+        // KHÔNG clear cart ở đây - chỉ clear khi thanh toán thành công
+
+        // Chuyển hướng đến VNPay để thanh toán
+        window.location.href = paymentResponse.data.data.paymentUrl;
+      } else {
+        console.error("Invalid payment response:", paymentResponse.data);
+        setError("Không thể tạo link thanh toán!");
       }
     } catch (error) {
-      console.error("Error creating order:", error);
-      setError(error.response?.data?.message || "Có lỗi xảy ra khi đặt hàng!");
+      console.error("Error creating payment:", error);
+      setError(
+        error.response?.data?.message || "Có lỗi xảy ra khi thanh toán!"
+      );
     } finally {
       setLoading(false);
     }
@@ -305,7 +378,7 @@ const Checkout = () => {
     <div className="checkout-container max-w-4xl mx-auto p-6">
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2 text-[#3399df] hover:text-blue-600 transition-colors"
         >
           <IoMdArrowRoundBack size={24} />
@@ -326,7 +399,8 @@ const Checkout = () => {
           <h3 className="text-lg font-medium text-gray-700 mb-4">
             Sản phẩm trong giỏ hàng
           </h3>
-          {((cart?.cartItems && cart.cartItems.length > 0) || (cart?.items && cart.items.length > 0)) ? (
+          {(cart?.cartItems && cart.cartItems.length > 0) ||
+          (cart?.items && cart.items.length > 0) ? (
             <div className="space-y-3">
               {(cart.cartItems || cart.items || []).map((cartItem) => (
                 <div
@@ -338,7 +412,8 @@ const Checkout = () => {
                     alt={cartItem.itemName}
                     className="w-16 h-16 object-cover rounded-lg"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/64x64?text=No+Image";
+                      e.target.src =
+                        "https://via.placeholder.com/64x64?text=No+Image";
                     }}
                   />
                   <div className="flex-1">
@@ -354,7 +429,9 @@ const Checkout = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-[#3399df]">
-                      ${cartItem.subtotal?.toFixed(2) || (cartItem.price * cartItem.quantity).toFixed(2)}
+                      {formatCurrency(
+                        cartItem.subtotal || cartItem.price * cartItem.quantity
+                      )}
                     </p>
                   </div>
                 </div>
@@ -363,7 +440,7 @@ const Checkout = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">Tổng cộng:</span>
                   <span className="text-xl font-bold text-[#3399df]">
-                    ${cart.totalAmount?.toFixed(2) || "0.00"}
+                    {formatCurrency(cart.totalAmount || 0)}
                   </span>
                 </div>
               </div>
@@ -569,36 +646,24 @@ const Checkout = () => {
           </div>
         </div>
 
-        {/* Payment Method */}
+        {/* Payment Method - VNPay Only */}
         <div className="bg-white p-6 rounded-lg shadow space-y-4">
           <h3 className="text-lg font-medium text-gray-700 mb-3">
             Phương thức thanh toán
           </h3>
 
-          <div className="space-y-3">
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="radio"
-                value="cash"
-                checked={paymentMethod === "cash"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-4 h-4 text-blue-500"
-              />
-              <FaMoneyBillWave className="text-green-600" />
-              <span>Tiền mặt</span>
-            </label>
-
-            <label className="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="radio"
-                value="card"
-                checked={paymentMethod === "card"}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-4 h-4 text-blue-500"
-              />
-              <FaCreditCard className="text-blue-600" />
-              <span>Thẻ tín dụng</span>
-            </label>
+          <div className="flex items-center space-x-3 p-4 border-2 border-[#3399df] rounded-lg bg-blue-50">
+            <img
+              src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png"
+              alt="VNPay"
+              className="h-8"
+            />
+            <div className="flex-1">
+              <p className="font-medium text-gray-800">Thanh toán qua VNPay</p>
+              <p className="text-sm text-gray-600">
+                Hỗ trợ thanh toán qua ATM, Visa, MasterCard, JCB, QR Code
+              </p>
+            </div>
           </div>
         </div>
 
@@ -606,9 +671,19 @@ const Checkout = () => {
         <button
           type="submit"
           disabled={!isLocationConfirmed || loading}
-          className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-[#3399df] text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {loading ? "Đang xử lý..." : "Đặt hàng"}
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Đang xử lý...</span>
+            </>
+          ) : (
+            <>
+              <FaCreditCard />
+              <span>Thanh toán qua VNPay</span>
+            </>
+          )}
         </button>
       </form>
     </div>

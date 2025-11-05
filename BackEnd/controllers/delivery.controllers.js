@@ -226,3 +226,4 @@ export const rateDelivery = async (req, res) => {
     });
   }
 };
+

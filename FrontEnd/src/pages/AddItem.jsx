@@ -14,6 +14,7 @@ function AddItem() {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [price, setPrice] = useState(0);
+  const [stock, setStock] = useState(100);
   const [frontendImage, setFrontendImage] = useState(null);
   const dispatch = useDispatch();
   const [backendImage, setBackendImage] = useState(null);
@@ -21,7 +22,7 @@ function AddItem() {
 
   const categories = [
     "Burgers",
-    " Sandwiches",
+    "Sandwiches",
     "Fried",
     "Desserts",
     "Drinks",
@@ -41,6 +42,7 @@ function AddItem() {
       formData.append("name", name);
       formData.append("category", catetory);
       formData.append("price", price);
+      formData.append("stock", stock);
 
       if (backendImage) {
         formData.append("image", backendImage);
@@ -123,6 +125,19 @@ function AddItem() {
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setPrice(e.target.value)}
               value={price}
+            ></input>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Số lượng
+            </label>
+            <input
+              type="number"
+              placeholder="0"
+              min="0"
+              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setStock(e.target.value)}
+              value={stock}
             ></input>
           </div>
           <div>

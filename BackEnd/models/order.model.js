@@ -124,13 +124,16 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["cash", "card", "momo", "zalopay"],
-      default: "cash",
+      enum: ["vnpay", "cash", "card"], // Cho phép các giá trị cũ để tương thích với orders đã tồn tại
+      default: "vnpay",
     },
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
+    },
+    transactionId: {
+      type: String,
     },
     orderStatus: {
       type: String,
@@ -176,12 +179,15 @@ const orderSchema = new mongoose.Schema(
 orderSchema.pre("save", function (next) {
   if (this.orderItems && this.orderItems.length > 0) {
     // Tính subtotal cho từng item
-    this.orderItems.forEach(item => {
+    this.orderItems.forEach((item) => {
       item.subtotal = item.price * item.quantity;
     });
-    
+
     // Tính totalAmount
-    this.totalAmount = this.orderItems.reduce((total, item) => total + item.subtotal, 0);
+    this.totalAmount = this.orderItems.reduce(
+      (total, item) => total + item.subtotal,
+      0
+    );
   }
   next();
 });

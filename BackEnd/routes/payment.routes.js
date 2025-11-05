@@ -5,12 +5,20 @@ import {
   getPaymentById,
   updatePaymentStatus,
   refundPayment,
+  createVNPayPaymentUrl,
+  vnpayReturn,
 } from "../controllers/payment.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 
 const router = express.Router();
 
-// Tạo payment mới
+// VNPay routes
+router.post("/vnpay/create-payment-url", isAuth, createVNPayPaymentUrl);
+
+// ✅ CRITICAL: VNPay callback về backend, backend update order rồi redirect về frontend
+router.get("/vnpay/return", vnpayReturn);
+
+// Tạo payment thủ công
 router.post("/create", isAuth, createPayment);
 
 // Lấy payments của user

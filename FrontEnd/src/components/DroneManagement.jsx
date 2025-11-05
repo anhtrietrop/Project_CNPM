@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
-import { 
-  FaHelicopter, 
-  FaPlus, 
-  FaEdit, 
-  FaTrash, 
+import {
+  FaHelicopter,
+  FaPlus,
+  FaEdit,
+  FaTrash,
   FaBatteryFull,
   FaBatteryHalf,
   FaBatteryQuarter,
   FaCheckCircle,
   FaClock,
   FaTools,
-  FaTimes
+  FaTimes,
 } from "react-icons/fa";
 import Loading from "./Loading.jsx";
 
@@ -51,10 +51,10 @@ const DroneManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setLoading(true);
-      
+
       if (editingDrone) {
         // Update drone
         await axios.put(
@@ -65,14 +65,12 @@ const DroneManagement = () => {
         alert("Cập nhật drone thành công!");
       } else {
         // Create drone
-        await axios.post(
-          `${serverURL}/api/drone`,
-          formData,
-          { withCredentials: true }
-        );
+        await axios.post(`${serverURL}/api/drone`, formData, {
+          withCredentials: true,
+        });
         alert("Tạo drone thành công!");
       }
-      
+
       setShowModal(false);
       resetForm();
       fetchDrones();
@@ -137,7 +135,7 @@ const DroneManagement = () => {
 
     try {
       setLoading(true);
-      
+
       await axios.put(
         `${serverURL}/api/drone/${selectedDrone._id}/battery`,
         { batteryPercentage: Number(batteryPercentage) },
@@ -257,13 +255,15 @@ const DroneManagement = () => {
                     {getStatusIcon(drone.status)}
                     <span>{getStatusLabel(drone.status)}</span>
                   </span>
-                  <div 
+                  <div
                     className="flex items-center gap-1 text-lg cursor-pointer hover:opacity-70 transition-opacity"
                     onClick={() => handleOpenBatteryModal(drone)}
                     title="Click để cập nhật pin"
                   >
                     {getBatteryIcon(drone.battery.current)}
-                    <span className="text-sm font-medium">{drone.battery.current}%</span>
+                    <span className="text-sm font-medium">
+                      {drone.battery.current}%
+                    </span>
                   </div>
                 </div>
 
@@ -353,7 +353,11 @@ const DroneManagement = () => {
                     disabled={loading}
                     className="flex-1 bg-[#3399df] text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? "Đang xử lý..." : editingDrone ? "Cập nhật" : "Tạo mới"}
+                    {loading
+                      ? "Đang xử lý..."
+                      : editingDrone
+                      ? "Cập nhật"
+                      : "Tạo mới"}
                   </button>
                 </div>
               </form>
@@ -374,19 +378,26 @@ const DroneManagement = () => {
 
               <div className="mb-6">
                 <p className="text-sm text-gray-600 mb-2">
-                  Drone: <span className="font-semibold">{selectedDrone.model}</span>
+                  Drone:{" "}
+                  <span className="font-semibold">{selectedDrone.model}</span>
                 </p>
                 <p className="text-sm text-gray-600 mb-2">
-                  SN: <span className="font-semibold">{selectedDrone.serialNumber}</span>
+                  SN:{" "}
+                  <span className="font-semibold">
+                    {selectedDrone.serialNumber}
+                  </span>
                 </p>
                 <p className="text-sm text-gray-600 mb-4">
-                  Pin hiện tại: <span className={`font-semibold ${
-                    selectedDrone.battery.current >= 70 
-                      ? "text-green-600" 
-                      : selectedDrone.battery.current >= 30 
-                      ? "text-yellow-600" 
-                      : "text-red-600"
-                  }`}>
+                  Pin hiện tại:{" "}
+                  <span
+                    className={`font-semibold ${
+                      selectedDrone.battery.current >= 70
+                        ? "text-green-600"
+                        : selectedDrone.battery.current >= 30
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
                     {selectedDrone.battery.current}%
                   </span>
                 </p>
@@ -414,7 +425,12 @@ const DroneManagement = () => {
                         ? "bg-yellow-500"
                         : "bg-red-500"
                     }`}
-                    style={{ width: `${Math.min(Math.max(batteryPercentage, 0), 100)}%` }}
+                    style={{
+                      width: `${Math.min(
+                        Math.max(batteryPercentage, 0),
+                        100
+                      )}%`,
+                    }}
                   ></div>
                   <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-700">
                     {batteryPercentage}%
@@ -447,7 +463,9 @@ const DroneManagement = () => {
                 </button>
                 <button
                   onClick={handleUpdateBattery}
-                  disabled={loading || batteryPercentage < 0 || batteryPercentage > 100}
+                  disabled={
+                    loading || batteryPercentage < 0 || batteryPercentage > 100
+                  }
                   className="flex-1 bg-[#3399df] text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Đang cập nhật..." : "Xác nhận"}

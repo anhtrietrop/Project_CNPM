@@ -8,3 +8,23 @@ body {
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* Custom scrollbar for horizontal scroll containers */
+.scrollbar-thin::-webkit-scrollbar {
+  display: block;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #3399df;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #2684c9;
+}

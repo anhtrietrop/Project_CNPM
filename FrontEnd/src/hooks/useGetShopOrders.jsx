@@ -11,7 +11,7 @@ const useGetShopOrders = (status = null) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       let url = `${serverURL}/api/order/shop/my-orders`;
       if (status) {
         url += `?status=${status}`;

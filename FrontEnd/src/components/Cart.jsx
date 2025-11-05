@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTrash, FaPlus, FaMinus, FaShoppingCart } from "react-icons/fa";
 import useCart from "../hooks/useCart.jsx";
+import { formatCurrency } from "../utils/formatCurrency.js";
 
 function Cart({ isOpen, onClose }) {
   const navigate = useNavigate();
@@ -59,20 +60,14 @@ function Cart({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl">
+      <div className="bg-[#fff9f6] rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
           <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <FaShoppingCart />
             Giỏ hàng
           </h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => (window.location.href = "/")}
-              className="bg-[#3399df] text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-            >
-              Quay lại Home
-            </button>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -88,7 +83,8 @@ function Cart({ isOpen, onClose }) {
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3399df]"></div>
             </div>
-          ) : (!cart?.cartItems || cart.cartItems.length === 0) && (!cart?.items || cart.items.length === 0) ? (
+          ) : (!cart?.cartItems || cart.cartItems.length === 0) &&
+            (!cart?.items || cart.items.length === 0) ? (
             <div className="text-center py-8">
               <FaShoppingCart className="mx-auto text-4xl text-gray-300 mb-4" />
               <p className="text-gray-500">Giỏ hàng trống</p>
@@ -156,10 +152,12 @@ function Cart({ isOpen, onClose }) {
 
                   <div className="text-right">
                     <p className="font-bold text-[#3399df]">
-                      ${cartItem.subtotal?.toFixed(2) || (cartItem.price * cartItem.quantity).toFixed(2)}
+                      {formatCurrency(
+                        cartItem.subtotal || cartItem.price * cartItem.quantity
+                      )}
                     </p>
                     <p className="text-xs text-gray-500">
-                      ${cartItem.price} each
+                      {formatCurrency(cartItem.price)} mỗi món
                     </p>
                   </div>
 
@@ -177,12 +175,13 @@ function Cart({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        {((cart?.cartItems && cart.cartItems.length > 0) || (cart?.items && cart.items.length > 0)) && (
-          <div className="border-t p-4">
+        {((cart?.cartItems && cart.cartItems.length > 0) ||
+          (cart?.items && cart.items.length > 0)) && (
+          <div className="border-t border-gray-200 p-4 bg-white">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-bold">Tổng cộng:</span>
               <span className="text-xl font-bold text-[#3399df]">
-                ${cart.totalAmount?.toFixed(2) || "0.00"}
+                {formatCurrency(cart.totalAmount || 0)}
               </span>
             </div>
 

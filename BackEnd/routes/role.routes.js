@@ -26,3 +26,4 @@ router.put("/:roleId", isAuth, updateRole);
 router.delete("/:roleId", isAuth, deleteRole);
 
 export default router;
+

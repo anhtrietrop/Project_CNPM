@@ -122,3 +122,4 @@ droneSchema.index({ "currentLocation.latitude": 1, "currentLocation.longitude": 
 const Drone = mongoose.model("Drone", droneSchema);
 
 export default Drone;
+

@@ -19,7 +19,7 @@ function OwnerDashboard() {
   return (
     <div className="w-full min-h-screen bg-[#fff9f6] flex flex-col items-center">
       <Nav />
-      
+
       {/* Tabs - Only show if shop exists */}
       {myShopData && (
         <div className="w-full max-w-6xl px-4 mt-6">

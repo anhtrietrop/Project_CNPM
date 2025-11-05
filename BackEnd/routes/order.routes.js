@@ -20,12 +20,12 @@ const router = express.Router();
 router.use(isAuth);
 
 // Shop owner routes - Phải đặt trước các routes có :orderId parameter
-router.get("/shop/my-orders", getShopOrders);
-router.get("/shop/:orderId", getShopOrderById);
-router.put("/shop/:orderId/status", updateShopOrderStatus);
-router.get("/shop/:orderId/available-drones", getAvailableDrones);
-router.post("/shop/:orderId/assign-drone", assignDroneToOrder);
-router.put("/shop/:orderId/drone-battery", updateDroneBattery);
+router.get("/shop/my-orders", isAuth, getShopOrders);
+router.get("/shop/:orderId", isAuth, getShopOrderById);
+router.put("/shop/:orderId/status", isAuth, updateShopOrderStatus);
+router.get("/shop/:orderId/available-drones", isAuth, getAvailableDrones);
+router.post("/shop/:orderId/assign-drone", isAuth, assignDroneToOrder);
+router.put("/shop/:orderId/drone-battery", isAuth, updateDroneBattery);
 
 // Tạo đơn hàng mới
 router.post("/", createOrder);

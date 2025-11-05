@@ -2,31 +2,48 @@ import React, { useState } from "react";
 import useGetUserOrders from "../hooks/useGetUserOrders.jsx";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
-import { 
-  FaShoppingBag, 
-  FaClock, 
-  FaTruck, 
+import {
+  FaShoppingBag,
+  FaClock,
+  FaTruck,
   FaTimesCircle,
   FaUtensils,
   FaMapMarkerAlt,
   FaCheckCircle,
-  FaBox
+  FaBox,
 } from "react-icons/fa";
 import { IoIosNotifications } from "react-icons/io";
 import Loading from "./Loading.jsx";
+import { formatCurrency } from "../utils/formatCurrency.js";
 
 const UserOrders = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
-  const { orders, loading, error, refetchOrders } = useGetUserOrders(selectedStatus);
+  const { orders, loading, error, refetchOrders } =
+    useGetUserOrders(selectedStatus);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
 
   const statusOptions = [
     { value: "", label: "Tất cả", icon: FaShoppingBag, color: "gray" },
     { value: "pending", label: "Chờ xác nhận", icon: FaClock, color: "yellow" },
-    { value: "confirmed", label: "Đã xác nhận", icon: FaCheckCircle, color: "blue" },
-    { value: "preparing", label: "Đang chuẩn bị", icon: FaUtensils, color: "orange" },
+    {
+      value: "confirmed",
+      label: "Đã xác nhận",
+      icon: FaCheckCircle,
+      color: "blue",
+    },
+    {
+      value: "preparing",
+      label: "Đang chuẩn bị",
+      icon: FaUtensils,
+      color: "orange",
+    },
     { value: "delivering", label: "Đang giao", icon: FaTruck, color: "purple" },
-    { value: "completed", label: "Hoàn thành", icon: FaCheckCircle, color: "green" },
+    {
+      value: "completed",
+      label: "Hoàn thành",
+      icon: FaCheckCircle,
+      color: "green",
+    },
     { value: "cancelled", label: "Đã hủy", icon: FaTimesCircle, color: "red" },
   ];
 
@@ -43,7 +60,7 @@ const UserOrders = () => {
   };
 
   const getStatusLabel = (status) => {
-    const option = statusOptions.find(opt => opt.value === status);
+    const option = statusOptions.find((opt) => opt.value === status);
     return option ? option.label : status;
   };
 
@@ -56,7 +73,7 @@ const UserOrders = () => {
 
     try {
       setCancellingOrderId(orderId);
-      
+
       await axios.put(
         `${serverURL}/api/order/${orderId}/cancel`,
         { reason: reason || "Cancelled by customer" },
@@ -92,7 +109,6 @@ const UserOrders = () => {
     <div className="w-full max-w-6xl mx-auto px-4 py-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <IoIosNotifications className="text-[#3399df] text-3xl" />
           Đơn hàng của tôi
         </h2>
 
@@ -128,7 +144,11 @@ const UserOrders = () => {
         <div className="bg-white rounded-xl shadow-md p-8 text-center">
           <FaShoppingBag className="text-gray-300 w-16 h-16 mx-auto mb-4" />
           <p className="text-gray-500 text-lg">
-            {selectedStatus ? `Không có đơn hàng ${getStatusLabel(selectedStatus).toLowerCase()}` : "Bạn chưa có đơn hàng nào"}
+            {selectedStatus
+              ? `Không có đơn hàng ${getStatusLabel(
+                  selectedStatus
+                ).toLowerCase()}`
+              : "Bạn chưa có đơn hàng nào"}
           </p>
         </div>
       ) : (
@@ -161,12 +181,11 @@ const UserOrders = () => {
                       order.orderStatus
                     )}`}
                   >
-                    <IoIosNotifications />
                     {getStatusLabel(order.orderStatus)}
                   </span>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-[#3399df]">
-                      ${order.totalAmount.toFixed(2)}
+                      {formatCurrency(order.totalAmount)}
                     </p>
                   </div>
                 </div>
@@ -181,7 +200,9 @@ const UserOrders = () => {
                     <p>{order.deliveryAddress.address}</p>
                     <p>{order.deliveryAddress.city}</p>
                     {order.deliveryAddress.note && (
-                      <p className="italic text-gray-500">Ghi chú: {order.deliveryAddress.note}</p>
+                      <p className="italic text-gray-500">
+                        Ghi chú: {order.deliveryAddress.note}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -203,24 +224,29 @@ const UserOrders = () => {
                           alt={item.itemName}
                           className="w-16 h-16 object-cover rounded-lg"
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/64x64?text=No+Image";
+                            e.target.src =
+                              "https://via.placeholder.com/64x64?text=No+Image";
                           }}
                         />
                         <div className="flex-1">
-                          <p className="font-medium text-gray-800">{item.itemName}</p>
+                          <p className="font-medium text-gray-800">
+                            {item.itemName}
+                          </p>
                           <p className="text-sm text-gray-500">
                             {item.shopName}
                           </p>
                           <p className="text-sm text-gray-500">
-                            SL: {item.quantity} x ${item.price.toFixed(2)}
+                            SL: {item.quantity} x {formatCurrency(item.price)}
                           </p>
                           {item.note && (
-                            <p className="text-sm text-gray-500 italic">Ghi chú: {item.note}</p>
+                            <p className="text-sm text-gray-500 italic">
+                              Ghi chú: {item.note}
+                            </p>
                           )}
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-[#3399df]">
-                            ${item.subtotal.toFixed(2)}
+                            {formatCurrency(item.subtotal)}
                           </p>
                         </div>
                       </div>
@@ -237,7 +263,9 @@ const UserOrders = () => {
                       className="w-full bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       <FaTimesCircle />
-                      {cancellingOrderId === order._id ? "Đang hủy..." : "Hủy đơn hàng"}
+                      {cancellingOrderId === order._id
+                        ? "Đang hủy..."
+                        : "Hủy đơn hàng"}
                     </button>
                   </div>
                 )}
@@ -245,13 +273,19 @@ const UserOrders = () => {
                 {/* Payment Info */}
                 <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center text-sm">
                   <div>
-                    <span className="text-gray-600">Phương thức thanh toán: </span>
+                    <span className="text-gray-600">
+                      Phương thức thanh toán:{" "}
+                    </span>
                     <span className="font-medium text-gray-800">
-                      {order.paymentMethod === "cash" ? "Tiền mặt" : "Thẻ tín dụng"}
+                      {order.paymentMethod === "cash"
+                        ? "Tiền mặt"
+                        : "Thẻ tín dụng"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-600">Trạng thái thanh toán: </span>
+                    <span className="text-gray-600">
+                      Trạng thái thanh toán:{" "}
+                    </span>
                     <span
                       className={`font-medium ${
                         order.paymentStatus === "paid"
