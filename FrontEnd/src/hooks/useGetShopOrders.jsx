@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
 
-const useGetShopOrders = (status = null) => {
+const useGetShopOrders = (status = null, autoRefreshInterval = 30000) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -34,7 +34,18 @@ const useGetShopOrders = (status = null) => {
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+
+    // ✅ Auto-refresh: Tự động fetch đơn hàng mới mỗi X giây
+    if (autoRefreshInterval && autoRefreshInterval > 0) {
+      const intervalId = setInterval(() => {
+        console.log("🔄 Auto-refreshing shop orders...");
+        fetchOrders();
+      }, autoRefreshInterval);
+
+      // Cleanup interval khi component unmount
+      return () => clearInterval(intervalId);
+    }
+  }, [fetchOrders, autoRefreshInterval]);
 
   return { orders, loading, error, refetchOrders: fetchOrders };
 };

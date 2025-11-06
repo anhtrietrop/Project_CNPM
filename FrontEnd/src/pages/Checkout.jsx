@@ -355,7 +355,10 @@ const Checkout = () => {
         paymentResponse.data.success &&
         paymentResponse.data.data.paymentUrl
       ) {
-        console.log("4. Redirecting to VNPay:", paymentResponse.data.data.paymentUrl);
+        console.log(
+          "4. Redirecting to VNPay:",
+          paymentResponse.data.data.paymentUrl
+        );
         // KHÔNG clear cart ở đây - chỉ clear khi thanh toán thành công
 
         // Chuyển hướng đến VNPay để thanh toán

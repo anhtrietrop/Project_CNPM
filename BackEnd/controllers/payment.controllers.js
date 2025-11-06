@@ -7,6 +7,7 @@ import Payment from "../models/payment.model.js";
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import Cart from "../models/cart.model.js";
+import Item from "../models/item.model.js";
 
 // Tạo URL thanh toán VNPay (TẠO ORDER TRƯỚC RỒI)
 export const createVNPayPaymentUrl = async (req, res) => {
@@ -156,6 +157,28 @@ export const vnpayReturn = async (req, res) => {
         `Order updated: ${orderId} - Status: confirmed, Payment: paid`
       );
 
+      // ✅ TRỪ SỐ LƯỢNG SẢN PHẨM trong kho
+      try {
+        for (const orderItem of order.orderItems) {
+          const item = await Item.findById(orderItem.itemId);
+          if (item) {
+            // Trừ stock
+            item.stock = Math.max(0, item.stock - orderItem.quantity);
+            await item.save();
+            console.log(
+              `📦 Stock updated for item ${item.name}: ${
+                item.stock + orderItem.quantity
+              } → ${item.stock}`
+            );
+          } else {
+            console.warn(`⚠️ Item not found: ${orderItem.itemId}`);
+          }
+        }
+      } catch (stockError) {
+        console.error("Error updating stock:", stockError);
+        // Không throw error, vì order đã thành công
+      }
+
       // ✅ XÓA GIỎ HÀNG sau khi thanh toán thành công
       try {
         const cart = await Cart.findOne({ user: order.user });
@@ -268,6 +291,19 @@ export const vnpayIPN = async (req, res) => {
       order.paymentStatus = "paid";
       order.paidAt = new Date();
       await order.save();
+
+      // ✅ TRỪ SỐ LƯỢNG SẢN PHẨM trong kho (IPN backup)
+      try {
+        for (const orderItem of order.orderItems) {
+          const item = await Item.findById(orderItem.itemId);
+          if (item && item.stock >= orderItem.quantity) {
+            item.stock -= orderItem.quantity;
+            await item.save();
+          }
+        }
+      } catch (stockError) {
+        console.error("IPN: Error updating stock:", stockError);
+      }
 
       return res.status(200).json({ RspCode: "00", Message: "Success" });
     } else {

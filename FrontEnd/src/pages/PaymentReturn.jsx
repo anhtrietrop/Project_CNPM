@@ -34,7 +34,7 @@ const PaymentReturn = () => {
           amount: parseInt(amount),
           transactionNo,
         });
-        
+
         // Clear cart khi thanh toán thành công (backup - backend đã xóa rồi)
         console.log("🛒 Clearing cart...");
         try {
