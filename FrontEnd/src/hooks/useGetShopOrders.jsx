@@ -38,7 +38,6 @@ const useGetShopOrders = (status = null, autoRefreshInterval = 30000) => {
     // ✅ Auto-refresh: Tự động fetch đơn hàng mới mỗi X giây
     if (autoRefreshInterval && autoRefreshInterval > 0) {
       const intervalId = setInterval(() => {
-        console.log("🔄 Auto-refreshing shop orders...");
         fetchOrders();
       }, autoRefreshInterval);
 

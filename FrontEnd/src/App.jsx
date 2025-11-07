@@ -15,6 +15,7 @@ import AddItem from "./pages/AddItem.jsx";
 import EditItem from "./pages/EditItem.jsx";
 import useGetShopByCity from "./hooks/useGetShopByCity.jsx";
 import Loading from "./components/Loading.jsx";
+import ToastContainer from "./components/ToastContainer.jsx";
 export const serverURL = "http://localhost:8000";
 
 function App() {
@@ -26,44 +27,44 @@ function App() {
   useGetMyShop();
   useGetShopByCity();
   return (
-    <Routes>
-      <Route
-        path="/signin"
-        element={!userData ? <SignIn /> : <Navigate to={"/"} />}
-      />
-      <Route
-        path="/signup"
-        element={!userData ? <SignUp /> : <Navigate to={"/"} />}
-      />
-      <Route
-        path="/forgot-password"
-        element={!userData ? <ForgotPassword /> : <Navigate to={"/"} />}
-      />
-      <Route
-        path="/"
-        element={userData ? <Home /> : <Navigate to={"/signin"} />}
-      />
-      <Route
-        path="/create-edit-shop"
-        element={userData ? <CreateEditShop /> : <Navigate to={"/signin"} />}
-      />
-      <Route
-        path="/add-item"
-        element={userData ? <AddItem /> : <Navigate to={"/signin"} />}
-      />
-      <Route
-        path="/edit-item/:itemId"
-        element={userData ? <EditItem /> : <Navigate to={"/signin"} />}
-      />
-      <Route
-        path="/checkout"
-        element={userData ? <Checkout /> : <Navigate to={"/signin"} />}
-      />
-      <Route
-        path="/payment-return"
-        element={userData ? <PaymentReturn /> : <Navigate to={"/signin"} />}
-      />
-    </Routes>
+    <>
+      <ToastContainer />
+      <Routes>
+        <Route
+          path="/signin"
+          element={!userData ? <SignIn /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/signup"
+          element={!userData ? <SignUp /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/forgot-password"
+          element={!userData ? <ForgotPassword /> : <Navigate to={"/"} />}
+        />
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/create-edit-shop"
+          element={userData ? <CreateEditShop /> : <Navigate to={"/signin"} />}
+        />
+        <Route
+          path="/add-item"
+          element={userData ? <AddItem /> : <Navigate to={"/signin"} />}
+        />
+        <Route
+          path="/edit-item/:itemId"
+          element={userData ? <EditItem /> : <Navigate to={"/signin"} />}
+        />
+        <Route
+          path="/checkout"
+          element={userData ? <Checkout /> : <Navigate to={"/signin"} />}
+        />
+        <Route
+          path="/payment-return"
+          element={userData ? <PaymentReturn /> : <Navigate to={"/signin"} />}
+        />
+      </Routes>
+    </>
   );
 }
 

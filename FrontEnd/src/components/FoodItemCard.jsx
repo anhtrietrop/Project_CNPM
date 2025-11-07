@@ -1,22 +1,41 @@
 import React, { useState } from "react";
 import { FaPlus, FaMinus, FaStar } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useToast } from "../hooks/useToast";
 import useCart from "../hooks/useCart.jsx";
 import { formatCurrency } from "../utils/formatCurrency.js";
 
 function FoodItemCard({ data }) {
   const { addItemToCart } = useCart();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const { userData } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(false);
   const isOutOfStock = data.stock === 0;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
 
+    // Kiểm tra đăng nhập
+    if (!userData) {
+      toast.info("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!", 3000);
+      setTimeout(() => {
+        navigate("/signin");
+      }, 1000);
+      return;
+    }
+
     try {
       setLoading(true);
       // Truyền full item data vào cart
       addItemToCart(data, 1);
+
+      // Hiển thị toast thành công
+      toast.success(`Đã thêm "${data.name}" vào giỏ hàng`, 2000);
     } catch (error) {
       console.error("Error adding to cart:", error);
+      toast.error("Lỗi khi thêm vào giỏ hàng!");
     } finally {
       setLoading(false);
     }

@@ -18,7 +18,8 @@ const paymentSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["vnpay", "momo", "zalopay", "cod", "bank_transfer"],
+      enum: ["vnpay"],
+      default: "vnpay",
       required: true,
     },
     status: {

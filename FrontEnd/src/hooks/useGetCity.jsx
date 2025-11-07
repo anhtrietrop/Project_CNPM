@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   setCurrentAddress,
   setCurrentCity,
@@ -9,13 +9,10 @@ import {
 
 function useGetCity() {
   const dispatch = useDispatch();
-  const { userData } = useSelector((state) => state.user);
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
 
   useEffect(() => {
-    // Chỉ fetch location khi có userData
-    if (!userData) return;
-    
+    // Không cần đăng nhập để lấy location
     navigator.geolocation.getCurrentPosition(async (position) => {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
@@ -35,10 +32,10 @@ function useGetCity() {
       // address: gộp address_line1 và address_line2
       const address_line1 = props.address_line1 || "";
       const address_line2 = props.address_line2 || "";
-      
+
       // Ưu tiên dùng formatted address (địa chỉ đầy đủ)
       let address = props.formatted || "";
-      
+
       // Nếu không có formatted, thì gộp address_line1 và address_line2
       if (!address) {
         if (address_line1 && address_line2) {
@@ -55,7 +52,7 @@ function useGetCity() {
       dispatch(setCurrentState(county)); // state ở Redux của bạn thực chất đang giữ county
       dispatch(setCurrentAddress(address));
     });
-  }, [userData, apiKey, dispatch]);
+  }, [apiKey, dispatch]); // Bỏ userData dependency
 }
 
 export default useGetCity;

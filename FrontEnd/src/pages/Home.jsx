@@ -26,12 +26,17 @@ function Home() {
     <div className="w-[100vw] min-h-[100vh] pt-[100px] flex flex-col items-center bg-[#fff9f6] relative">
       {/* Background mờ */}
       <div className="fixed inset-0 bg-gradient-to-br from-blue-50 to-orange-50 opacity-30 z-0"></div>
-      
+
       {/* Content */}
       <div className="relative z-10 w-full">
         <Nav />
-        {userData.role == "user" && <UserDashboard />}
-        {userData.role == "owner" && <OwnerDashboard />}
+        {!userData ? (
+          <UserDashboard />
+        ) : userData.role == "user" ? (
+          <UserDashboard />
+        ) : userData.role == "owner" ? (
+          <OwnerDashboard />
+        ) : null}
       </div>
     </div>
   );

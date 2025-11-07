@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import useGetShopOrders from "../hooks/useGetShopOrders.jsx";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
+import { useToast } from "../hooks/useToast";
 import {
   FaShoppingBag,
   FaCheckCircle,
@@ -23,6 +24,7 @@ import Loading from "./Loading.jsx";
 import { formatCurrency } from "../utils/formatCurrency.js";
 
 const MyOrders = () => {
+  const toast = useToast();
   const [selectedStatus, setSelectedStatus] = useState("");
   const { orders, loading, error, refetchOrders } =
     useGetShopOrders(selectedStatus);
@@ -121,13 +123,13 @@ const MyOrders = () => {
         { withCredentials: true }
       );
 
-      alert("Cập nhật trạng thái đơn hàng thành công!");
+      toast.success("Cập nhật trạng thái đơn hàng thành công!");
 
       // Refetch orders để cập nhật UI
       await refetchOrders();
     } catch (err) {
       console.error("Error updating order status:", err);
-      alert(
+      toast.error(
         err.response?.data?.message || "Lỗi khi cập nhật trạng thái đơn hàng!"
       );
     } finally {
@@ -145,7 +147,7 @@ const MyOrders = () => {
       setAvailableDrones(response.data.drones || []);
     } catch (err) {
       console.error("Error fetching drones:", err);
-      alert("Không thể tải danh sách drone!");
+      toast.error("Không thể tải danh sách drone!");
     } finally {
       setLoadingDrones(false);
     }
@@ -153,7 +155,7 @@ const MyOrders = () => {
 
   const handleAssignDrone = async () => {
     if (!selectedDrone) {
-      alert("Vui lòng chọn drone!");
+      toast.error("Vui lòng chọn drone!");
       return;
     }
 
@@ -166,14 +168,14 @@ const MyOrders = () => {
         { withCredentials: true }
       );
 
-      alert("Giao drone thành công! Đơn hàng đang được giao.");
+      toast.success("Giao drone thành công! Đơn hàng đang được giao.");
       setShowDroneModal(false);
       setSelectedOrder(null);
       setSelectedDrone(null);
       refetchOrders();
     } catch (err) {
       console.error("Error assigning drone:", err);
-      alert(err.response?.data?.message || "Lỗi khi giao drone!");
+      toast.error(err.response?.data?.message || "Lỗi khi giao drone!");
     } finally {
       setUpdatingOrderId(null);
     }
@@ -189,7 +191,7 @@ const MyOrders = () => {
     if (!selectedOrderForBattery) return;
 
     if (batteryPercentage < 0 || batteryPercentage > 100) {
-      alert("Phần trăm pin phải từ 0 đến 100!");
+      toast.error("Phần trăm pin phải từ 0 đến 100!");
       return;
     }
 
@@ -202,7 +204,7 @@ const MyOrders = () => {
         { withCredentials: true }
       );
 
-      alert("Cập nhật pin drone thành công!");
+      toast.success("Cập nhật pin drone thành công!");
       setShowBatteryModal(false);
       setSelectedOrderForBattery(null);
 
@@ -210,7 +212,7 @@ const MyOrders = () => {
       await refetchOrders();
     } catch (err) {
       console.error("Error updating drone battery:", err);
-      alert(err.response?.data?.message || "Lỗi khi cập nhật pin drone!");
+      toast.error(err.response?.data?.message || "Lỗi khi cập nhật pin drone!");
     } finally {
       setUpdatingOrderId(null);
     }
@@ -506,11 +508,7 @@ const MyOrders = () => {
                         <span className="text-gray-600">
                           Phương thức thanh toán:{" "}
                         </span>
-                        <span className="font-medium text-gray-800">
-                          {order.paymentMethod === "cash"
-                            ? "Tiền mặt"
-                            : "Thẻ tín dụng"}
-                        </span>
+                        <span className="font-medium text-gray-800">VNPay</span>
                       </div>
                       <div>
                         <span className="text-gray-600">

@@ -13,9 +13,16 @@ function useGetCurrentUser() {
         const result = await axios.get(`${serverURL}/api/user/current`, {
           withCredentials: true,
         });
-        dispatch(setUserData(result.data.user));
-      } catch (error) {
-        dispatch(setUserData(null)); // Set null nếu không có user
+
+        // Kiểm tra status code và data
+        if (result.data?.user) {
+          dispatch(setUserData(result.data.user));
+        } else {
+          dispatch(setUserData(null));
+        }
+      } catch {
+        // Chỉ set null, không log gì cả (400/401 là bình thường khi chưa login)
+        dispatch(setUserData(null));
       }
     };
     fetchUser();

@@ -129,15 +129,19 @@ export const vnpayReturn = async (req, res) => {
       );
     }
 
-    // Tìm payment
-    const payment = await Payment.findOne({
-      order: orderId,
-      status: "pending",
-    });
+    // Tìm payment - TÌM THEO ORDER ID (không cần check status)
+    const payment = await Payment.findOne({ order: orderId });
+
+    console.log(
+      `🔍 Payment lookup for order ${orderId}:`,
+      payment
+        ? `Found (ID: ${payment._id}, Status: ${payment.status})`
+        : "NOT FOUND"
+    );
 
     if (responseCode === "00") {
       // Thanh toán thành công
-      console.log(`Payment successful for order: ${orderId}`);
+      console.log(`✅ Payment successful for order: ${orderId}`);
 
       if (payment) {
         payment.status = "success";
@@ -145,6 +149,23 @@ export const vnpayReturn = async (req, res) => {
         payment.bankCode = bankCode;
         payment.payDate = payDate;
         await payment.save();
+        console.log(`💾 Payment updated: ${payment._id} - Status: success`);
+      } else {
+        console.error(
+          `⚠️ WARNING: Payment record not found for order ${orderId}! Creating new payment...`
+        );
+        // Tạo payment record nếu không tồn tại
+        const newPayment = await Payment.create({
+          user: order.user,
+          order: orderId,
+          amount: amount,
+          paymentMethod: "vnpay",
+          status: "success",
+          transactionId: transactionNo,
+          bankCode: bankCode,
+          payDate: payDate,
+        });
+        console.log(`💾 New payment created: ${newPayment._id}`);
       }
 
       // CẬP NHẬT ORDER
@@ -200,7 +221,7 @@ export const vnpayReturn = async (req, res) => {
     } else {
       // Thanh toán thất bại
       console.log(
-        `Payment failed for order: ${orderId}, Code: ${responseCode}`
+        `❌ Payment failed for order: ${orderId}, Code: ${responseCode}`
       );
 
       if (payment) {
@@ -208,6 +229,21 @@ export const vnpayReturn = async (req, res) => {
         payment.failureReason =
           vnpayResponseCodes[responseCode] || "Giao dịch thất bại";
         await payment.save();
+        console.log(`💾 Payment updated to failed: ${payment._id}`);
+      } else {
+        console.error(
+          `⚠️ WARNING: Payment record not found for failed order ${orderId}! Creating new payment...`
+        );
+        // Tạo payment record nếu không tồn tại (trường hợp failed)
+        await Payment.create({
+          user: order.user,
+          order: orderId,
+          amount: amount,
+          paymentMethod: "vnpay",
+          status: "failed",
+          failureReason:
+            vnpayResponseCodes[responseCode] || "Giao dịch thất bại",
+        });
       }
 
       order.paymentStatus = "failed";

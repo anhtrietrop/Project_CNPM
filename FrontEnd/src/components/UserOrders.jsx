@@ -276,11 +276,7 @@ const UserOrders = () => {
                     <span className="text-gray-600">
                       Phương thức thanh toán:{" "}
                     </span>
-                    <span className="font-medium text-gray-800">
-                      {order.paymentMethod === "cash"
-                        ? "Tiền mặt"
-                        : "Thẻ tín dụng"}
-                    </span>
+                    <span className="font-medium text-gray-800">VNPay</span>
                   </div>
                   <div>
                     <span className="text-gray-600">

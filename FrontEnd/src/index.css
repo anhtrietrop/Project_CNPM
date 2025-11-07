@@ -28,3 +28,32 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #2684c9;
 }
+
+/* Notification Animations */
+@keyframes slide-in {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+.animate-progress {
+  animation: progress linear forwards;
+}

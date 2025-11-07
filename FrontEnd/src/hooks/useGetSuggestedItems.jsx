@@ -1,25 +1,19 @@
 import { useEffect } from "react";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { setSuggestedItems } from "../redux/userSlice.js";
 
 function useGetSuggestedItems() {
   const dispatch = useDispatch();
-  const { userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    // Chỉ fetch khi có userData
-    if (!userData) return;
-    
+    // Không cần đăng nhập để xem suggested items
     const fetchSuggestedItems = async () => {
       try {
-        const result = await axios.get(
-          `${serverURL}/api/item/suggested`,
-          {
-            withCredentials: true,
-          }
-        );
+        const result = await axios.get(`${serverURL}/api/item/suggested`, {
+          withCredentials: true,
+        });
         dispatch(setSuggestedItems(result.data));
         console.log("Suggested items:", result.data);
       } catch (error) {
@@ -27,7 +21,7 @@ function useGetSuggestedItems() {
       }
     };
     fetchSuggestedItems();
-  }, [userData, dispatch]);
+  }, [dispatch]); // Bỏ userData dependency
 
   return null;
 }

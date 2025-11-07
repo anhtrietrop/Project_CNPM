@@ -11,5 +11,5 @@ const shopRouter = express.Router();
 shopRouter.post("/create-edit", isAuth, upload.single("image"), createEditShop);
 
 shopRouter.get("/get-my", isAuth, getMyShop);
-shopRouter.get("/get-by-city/:city", isAuth, getShopByCity);
+shopRouter.get("/get-by-city/:city", getShopByCity); // Bỏ isAuth để guest có thể xem
 export default shopRouter;

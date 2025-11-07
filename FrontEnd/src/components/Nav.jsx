@@ -36,11 +36,14 @@ function Nav() {
   };
   return (
     <div className="w-full h-[80px] flex items-center justify-between md:justify-center gap-[30px] px-[20px] fixed top-0 z-[9999] bg-[#fff9f6] overflow-visible">
-      {showSearch && userData.role == "user" && (
+      {/* Mobile search bar - hiện cho cả guest và user */}
+      {showSearch && (!userData || userData?.role === "user") && (
         <div className="w-[90%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] flex fixed top-[80px] left-[5%] ">
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className=" text-[#3399df]" />{" "}
-            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
+            <div className="w-[80%] truncate text-gray-600">
+              {currentCity || "Đang tải..."}
+            </div>
           </div>
           <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#3399df]" />
@@ -53,11 +56,14 @@ function Nav() {
         </div>
       )}
       <h1 className="text-3xl font-bold mb-2 text-[#3399df]">Snake</h1>
-      {userData.role == "user" && (
+      {/* Hiển thị search cho cả guest và user (không cho owner) */}
+      {(!userData || userData?.role === "user") && (
         <div className="md:w-[60%] lg:w-[40%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] hidden md:flex">
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className=" text-[#3399df]" />{" "}
-            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
+            <div className="w-[80%] truncate text-gray-600">
+              {currentCity || "Đang tải..."}
+            </div>
           </div>
           <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#3399df]" />
@@ -73,7 +79,8 @@ function Nav() {
       )}
 
       <div className="flex items-center gap-4">
-        {userData.role == "user" &&
+        {/* Icon search cho mobile - hiện cho cả guest và user */}
+        {(!userData || userData?.role === "user") &&
           (showSearch ? (
             <RxCross2
               size={25}
@@ -87,7 +94,7 @@ function Nav() {
               onClick={() => setShowSearchModal(true)}
             />
           ))}
-        {userData.role == "owner" ? (
+        {userData?.role == "owner" ? (
           <>
             {myShopData && (
               <>
@@ -121,7 +128,7 @@ function Nav() {
               </span>
             </div>
           </>
-        ) : (
+        ) : userData ? (
           <>
             <div
               className="relative cursor-pointer"
@@ -140,32 +147,46 @@ function Nav() {
               My Orders
             </button>
           </>
+        ) : (
+          <>
+            {/* Chưa đăng nhập - Hiển thị nút Sign In */}
+            <button
+              className="px-4 py-2 rounded-lg bg-[#3399df] text-white text-sm font-medium hover:bg-blue-600 transition-colors"
+              onClick={() => navigation("/signin")}
+            >
+              Đăng nhập
+            </button>
+          </>
         )}
 
-        <div
-          className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#3399df] text-white text-[18px] shadow-lg font-semibold cursor-pointer "
-          onClick={() => setShowInfo((prev) => !prev)}
-        >
-          <div>{userData?.fullName?.slice(0, 1) || ""}</div>
-        </div>
-        {showInfo && (
-          <div className=" fixed top-[80px] right-[10px] md:right-[10px] lg:right-[25%] w-[180px] bg-white shadow-2xl rounded-xl p-[20px] flex flex-col gap-[10px] z-[9999]">
-            <div className=" text-[17px] font-semibold">
-              {userData.fullName}
+        {userData && (
+          <>
+            <div
+              className="w-[40px] h-[40px] rounded-full flex items-center justify-center bg-[#3399df] text-white text-[18px] shadow-lg font-semibold cursor-pointer "
+              onClick={() => setShowInfo((prev) => !prev)}
+            >
+              <div>{userData?.fullName?.slice(0, 1) || ""}</div>
             </div>
-            {userData.role == "user" && (
-              <div className=" md:hidden text-[#3399df] font-semibold cursor-pointer">
-                My Orders
+            {showInfo && (
+              <div className=" fixed top-[80px] right-[10px] md:right-[10px] lg:right-[25%] w-[180px] bg-white shadow-2xl rounded-xl p-[20px] flex flex-col gap-[10px] z-[9999]">
+                <div className=" text-[17px] font-semibold">
+                  {userData?.fullName}
+                </div>
+                {userData?.role == "user" && (
+                  <div className=" md:hidden text-[#3399df] font-semibold cursor-pointer">
+                    My Orders
+                  </div>
+                )}
+
+                <div
+                  className="text-[#3399df] font-semibold cursor-pointer"
+                  onClick={handleLogOut}
+                >
+                  Log Out
+                </div>
               </div>
             )}
-
-            <div
-              className="text-[#3399df] font-semibold cursor-pointer"
-              onClick={handleLogOut}
-            >
-              Log Out
-            </div>
-          </div>
+          </>
         )}
       </div>
 

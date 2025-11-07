@@ -13,17 +13,27 @@ import {
 function useCart() {
   // Lấy cart từ Redux store
   const cart = useSelector((state) => state.cart);
+  const { userData } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch cart từ backend khi component mount
+  // Fetch cart từ backend khi component mount (chỉ khi đã đăng nhập)
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (userData) {
+      fetchCart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData]);
 
   // Fetch cart từ backend
   const fetchCart = async () => {
+    if (!userData) {
+      // Nếu chưa đăng nhập, set cart rỗng
+      dispatch(setCart({ cartItems: [], totalAmount: 0 }));
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await axios.get(`${serverURL}/api/cart/my-cart`, {
@@ -31,9 +41,12 @@ function useCart() {
       });
       dispatch(setCart(response.data));
     } catch (error) {
-      console.error("Error fetching cart:", error);
+      // Không log lỗi 401/400 (chưa đăng nhập là bình thường)
+      if (error.response?.status !== 401 && error.response?.status !== 400) {
+        console.error("Error fetching cart:", error);
+      }
       // Nếu không có cart, tạo cart rỗng
-      dispatch(setCart({ items: [], totalAmount: 0 }));
+      dispatch(setCart({ cartItems: [], totalAmount: 0 }));
     } finally {
       setLoading(false);
     }
@@ -145,10 +158,9 @@ function useCart() {
       setLoading(true);
       setError(null);
 
-      const response = await axios.delete(
-        `${serverURL}/api/cart/clear`,
-        { withCredentials: true }
-      );
+      const response = await axios.delete(`${serverURL}/api/cart/clear`, {
+        withCredentials: true,
+      });
 
       // Cập nhật Redux store với data từ backend
       dispatch(setCart(response.data));
@@ -178,7 +190,11 @@ function useCart() {
   // Lấy tổng giá trị cart
   const getTotalPrice = () => {
     const items = cart?.cartItems || cart?.items || [];
-    return items.reduce((total, cartItem) => total + (cartItem.subtotal || cartItem.price * cartItem.quantity), 0);
+    return items.reduce(
+      (total, cartItem) =>
+        total + (cartItem.subtotal || cartItem.price * cartItem.quantity),
+      0
+    );
   };
 
   return {

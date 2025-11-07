@@ -3,6 +3,7 @@
 Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng drone và thanh toán VNPay.
 
 ## 📋 Mục lục
+
 - [Tính năng](#-tính-năng)
 - [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
 - [Yêu cầu hệ thống](#-yêu-cầu-hệ-thống)
@@ -17,6 +18,7 @@ Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng
 ## ✨ Tính năng
 
 ### 👤 Người dùng (User)
+
 - ✅ Đăng ký/Đăng nhập (Firebase Auth)
 - ✅ Tìm kiếm shop theo địa điểm
 - ✅ Thêm món ăn vào giỏ hàng
@@ -25,6 +27,7 @@ Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng
 - ✅ Đánh giá món ăn
 
 ### 🏪 Chủ shop (Owner)
+
 - ✅ Tạo và quản lý shop
 - ✅ Thêm/Sửa/Xóa món ăn
 - ✅ Quản lý kho (stock management)
@@ -32,11 +35,13 @@ Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng
 - ✅ Dashboard thống kê
 
 ### 🚁 Drone Delivery
+
 - ✅ Giao hàng tự động bằng drone
 - ✅ Tính toán khoảng cách và thời gian
 - ✅ Quản lý drone pool
 
 ### 💳 Thanh toán VNPay
+
 - ✅ Tích hợp VNPay Sandbox
 - ✅ Xác thực chữ ký bảo mật
 - ✅ Callback & IPN handling
@@ -47,6 +52,7 @@ Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng
 ## 🛠 Công nghệ sử dụng
 
 ### Backend
+
 - **Node.js** v22+
 - **Express.js** - REST API framework
 - **MongoDB** - Database
@@ -56,6 +62,7 @@ Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng
 - **Nodemailer** - Email service
 
 ### Frontend
+
 - **React** 18+ với Vite
 - **Redux Toolkit** - State management
 - **React Router** - Navigation
@@ -64,6 +71,7 @@ Hệ thống đặt đồ ăn trực tuyến với tính năng giao hàng bằng
 - **React Icons** - Icons
 
 ### Payment Gateway
+
 - **VNPay Sandbox** - Payment integration
 
 ---
@@ -179,11 +187,13 @@ Frontend sẽ chạy tại: **http://localhost:5173**
 Sử dụng 2 terminal trong VS Code:
 
 **Terminal 1 - Backend:**
+
 ```powershell
 cd BackEnd ; node index.js
 ```
 
 **Terminal 2 - Frontend:**
+
 ```powershell
 cd FrontEnd ; npm run dev
 ```
@@ -228,6 +238,7 @@ Project_CNPM/
 ## 📡 API Documentation
 
 ### Base URL
+
 ```
 http://localhost:8000/api
 ```
@@ -235,18 +246,21 @@ http://localhost:8000/api
 ### Endpoints chính
 
 #### 🔐 Authentication
+
 - `POST /auth/register` - Đăng ký tài khoản
 - `POST /auth/login` - Đăng nhập
 - `POST /auth/logout` - Đăng xuất
 - `GET /auth/current-user` - Lấy thông tin user
 
 #### 🏪 Shop
+
 - `GET /shop/get-all` - Lấy tất cả shop
 - `GET /shop/get-by-city/:city` - Lấy shop theo thành phố
 - `POST /shop/create` - Tạo shop mới
 - `POST /shop/edit/:shopId` - Chỉnh sửa shop
 
 #### 🍕 Item (Food)
+
 - `GET /item/get-all/:shopId` - Lấy món ăn của shop
 - `GET /item/get-by-id/:itemId` - Lấy chi tiết món ăn
 - `POST /item/create` - Thêm món ăn mới
@@ -254,6 +268,7 @@ http://localhost:8000/api
 - `DELETE /item/delete/:itemId` - Xóa món ăn
 
 #### 🛒 Cart
+
 - `GET /cart/get` - Lấy giỏ hàng
 - `POST /cart/add` - Thêm vào giỏ hàng
 - `POST /cart/update` - Cập nhật số lượng
@@ -261,12 +276,14 @@ http://localhost:8000/api
 - `DELETE /cart/clear` - Xóa toàn bộ giỏ hàng
 
 #### 📦 Order
+
 - `GET /order/my-orders` - Đơn hàng của user
 - `GET /order/shop-orders` - Đơn hàng của shop
 - `POST /order` - Tạo đơn hàng mới
 - `PATCH /order/:orderId/status` - Cập nhật trạng thái
 
 #### 💳 Payment
+
 - `POST /payment/vnpay/create-payment-url` - Tạo URL thanh toán VNPay
 - `GET /payment/vnpay/return` - Callback sau thanh toán
 - `GET /payment/vnpay/ipn` - IPN notification từ VNPay
@@ -283,9 +300,9 @@ http://localhost:8000/api
 
 ### Thẻ test
 
-| Ngân hàng | Số thẻ | Tên | Ngày hết hạn | OTP |
-|-----------|--------|-----|--------------|-----|
-| NCB | 9704198526191432198 | NGUYEN VAN A | 07/15 | 123456 |
+| Ngân hàng | Số thẻ              | Tên          | Ngày hết hạn | OTP    |
+| --------- | ------------------- | ------------ | ------------ | ------ |
+| NCB       | 9704198526191432198 | NGUYEN VAN A | 07/15        | 123456 |
 
 ### Luồng thanh toán
 
@@ -307,6 +324,7 @@ http://localhost:8000/api
 ## 🐛 Troubleshooting
 
 ### Backend không kết nối được MongoDB
+
 ```powershell
 # Kiểm tra MongoDB đang chạy
 mongod --version
@@ -316,16 +334,19 @@ net start MongoDB
 ```
 
 ### Frontend không gọi được API
+
 - Kiểm tra `VITE_BACKEND_URL` trong `.env`
 - Đảm bảo backend đang chạy tại port 8000
 - Kiểm tra CORS settings trong backend
 
 ### VNPay trả về lỗi "Invalid signature"
+
 - Kiểm tra `VNPAY_TMN_CODE` và `VNPAY_HASH_SECRET`
 - Đảm bảo không có khoảng trắng thừa trong `.env`
 - Xem log backend để debug signature
 
 ### Stock không bị trừ sau thanh toán
+
 - Kiểm tra log backend: `📦 Stock updated for item...`
 - Verify order có `orderStatus = "confirmed"`
 - Check `item.stock` trong database
