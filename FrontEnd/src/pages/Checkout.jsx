@@ -298,6 +298,12 @@ const Checkout = () => {
       return;
     }
 
+    // Validate số điện thoại
+    if (!/^[0-9]{10,11}$/.test(contactPhone)) {
+      setError("Số điện thoại phải có 10-11 chữ số!");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -629,10 +635,21 @@ const Checkout = () => {
             <input
               type="tel"
               value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
+              onChange={(e) => {
+                // Chỉ cho phép nhập số
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                setContactPhone(value);
+              }}
+              pattern="[0-9]{10,11}"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Nhập 10-11 chữ số"
               required
             />
+            {contactPhone && !/^[0-9]{10,11}$/.test(contactPhone) && (
+              <p className="text-red-500 text-sm mt-1">
+                Số điện thoại phải có 10-11 chữ số
+              </p>
+            )}
           </div>
 
           <div>

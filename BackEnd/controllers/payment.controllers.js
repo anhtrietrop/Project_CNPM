@@ -169,13 +169,12 @@ export const vnpayReturn = async (req, res) => {
       }
 
       // CẬP NHẬT ORDER
-      order.paymentStatus = "paid";
+      order.payment = payment._id; // ✅ Lưu reference đến payment
       order.orderStatus = "confirmed"; // Chuyển sang confirmed
-      order.transactionId = transactionNo;
       await order.save();
 
       console.log(
-        `Order updated: ${orderId} - Status: confirmed, Payment: paid`
+        `Order updated: ${orderId} - Status: confirmed, Payment: ${payment._id}`
       );
 
       // ✅ TRỪ SỐ LƯỢNG SẢN PHẨM trong kho
@@ -246,7 +245,7 @@ export const vnpayReturn = async (req, res) => {
         });
       }
 
-      order.paymentStatus = "failed";
+      order.payment = payment?._id; // Lưu payment reference (nếu có)
       await order.save();
 
       return res.redirect(

@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
 
-const useGetShopOrders = (status = null, autoRefreshInterval = 30000) => {
+const useGetShopOrders = (status = null, autoRefreshInterval = 0) => {
+  // ✅ TẮT auto-refresh
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

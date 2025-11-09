@@ -28,6 +28,14 @@ export const createOrder = async (req, res) => {
         .json({ message: "Contact information is required" });
     }
 
+    // Validate phone number (10-11 digits)
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(contactInfo.phone)) {
+      return res.status(400).json({
+        message: "Phone number must be 10-11 digits",
+      });
+    }
+
     // Verify items và lấy thông tin đầy đủ cho embedded documents
     const orderItems = [];
     for (const cartItem of items) {
@@ -119,6 +127,10 @@ export const getUserOrders = async (req, res) => {
         path: "user",
         select: "fullName email mobile",
       })
+      .populate({
+        path: "payment",
+        select: "paymentMethod status transactionId amount payDate",
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -147,10 +159,15 @@ export const getOrderById = async (req, res) => {
     const order = await Order.findOne({
       _id: orderId,
       user: req.userId,
-    }).populate({
-      path: "user",
-      select: "fullName email mobile",
-    });
+    })
+      .populate({
+        path: "user",
+        select: "fullName email mobile",
+      })
+      .populate({
+        path: "payment",
+        select: "paymentMethod status transactionId amount payDate",
+      });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -234,7 +251,7 @@ export const updateOrderStatus = async (req, res) => {
 
     if (status === "completed") {
       order.deliveredAt = new Date();
-      order.paymentStatus = "paid";
+      // ❌ Xóa: paymentStatus đã được quản lý trong Payment model
     }
 
     await order.save();
@@ -270,6 +287,10 @@ export const getShopOrders = async (req, res) => {
         path: "user",
         select: "fullName email mobile",
       })
+      .populate({
+        path: "payment",
+        select: "paymentMethod status transactionId amount payDate",
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -298,10 +319,15 @@ export const getShopOrderById = async (req, res) => {
     const order = await Order.findOne({
       _id: orderId,
       "orderItems.shopOwnerId": req.userId,
-    }).populate({
-      path: "user",
-      select: "fullName email mobile",
-    });
+    })
+      .populate({
+        path: "user",
+        select: "fullName email mobile",
+      })
+      .populate({
+        path: "payment",
+        select: "paymentMethod status transactionId amount payDate",
+      });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -350,7 +376,7 @@ export const updateShopOrderStatus = async (req, res) => {
 
     if (status === "completed") {
       order.deliveredAt = new Date();
-      order.paymentStatus = "paid";
+      // ❌ Xóa: paymentStatus được quản lý trong Payment model
 
       // Nếu có drone được giao, cập nhật lại trạng thái và pin của drone
       if (order.drone) {

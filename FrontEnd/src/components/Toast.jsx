@@ -88,7 +88,9 @@ function Toast({ message, type = "success", onClose, duration = 3000 }) {
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
         <div className="flex-1">
-          <p className="text-gray-800 font-medium">{message}</p>
+          <p className="text-gray-800 font-medium whitespace-pre-line">
+            {message}
+          </p>
         </div>
         <button
           onClick={onClose}

@@ -122,18 +122,11 @@ const orderSchema = new mongoose.Schema(
         type: String,
       },
     },
-    paymentMethod: {
-      type: String,
-      enum: ["vnpay", "cash", "card"], // Cho phép các giá trị cũ để tương thích với orders đã tồn tại
-      default: "vnpay",
-    },
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "paid", "failed"],
-      default: "pending",
-    },
-    transactionId: {
-      type: String,
+    // ❌ XÓA: paymentMethod, paymentStatus, transactionId
+    // ✅ CHỈ GIỮ: Reference đến Payment
+    payment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
     },
     orderStatus: {
       type: String,

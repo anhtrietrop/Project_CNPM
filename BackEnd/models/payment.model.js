@@ -10,7 +10,7 @@ const paymentSchema = new mongoose.Schema(
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
-      required: false, // Không bắt buộc vì order chỉ tạo sau khi thanh toán thành công
+      required: true, // ✅ Bắt buộc - mỗi payment phải có order
     },
     amount: {
       type: Number,
@@ -42,10 +42,6 @@ const paymentSchema = new mongoose.Schema(
     failureReason: {
       type: String,
       default: "",
-    },
-    metadata: {
-      type: mongoose.Schema.Types.Mixed, // Lưu thông tin order tạm thời
-      default: {},
     },
   },
   {
