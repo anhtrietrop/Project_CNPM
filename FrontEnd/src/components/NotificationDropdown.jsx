@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IoIosNotifications } from "react-icons/io";
-import { FaCheckCircle, FaTruck, FaUtensils, FaClock, FaTimesCircle } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaTruck,
+  FaUtensils,
+  FaClock,
+  FaTimesCircle,
+} from "react-icons/fa";
 import useGetUserOrders from "../hooks/useGetUserOrders";
 
 const NotificationDropdown = () => {
@@ -32,10 +38,10 @@ const NotificationDropdown = () => {
     if (!orders || orders.length === 0) return [];
 
     const notifications = [];
-    
+
     orders.forEach((order) => {
       const notificationId = `${order._id}-${order.orderStatus}`;
-      
+
       let notification = {
         id: notificationId,
         orderId: order._id,
@@ -84,7 +90,9 @@ const NotificationDropdown = () => {
     });
 
     // Sort by timestamp, newest first
-    return notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return notifications.sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+    );
   };
 
   const notifications = getNotifications();
@@ -114,7 +122,7 @@ const NotificationDropdown = () => {
     if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
     if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
-    
+
     return date.toLocaleDateString("vi-VN");
   };
 
