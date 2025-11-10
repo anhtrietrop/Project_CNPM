@@ -32,6 +32,20 @@ const shopSchema = new mongoose.Schema(
         ref: "Item",
       },
     ],
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    approvedAt: {
+      type: Date,
+    },
+    rejectedReason: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

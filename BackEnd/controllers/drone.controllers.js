@@ -15,6 +15,14 @@ export const createDrone = async (req, res) => {
       });
     }
 
+    // Kiểm tra shop đã được duyệt chưa
+    if (!shop.isApproved) {
+      return res.status(403).json({
+        success: false,
+        message: "Nhà hàng của bạn chưa được Admin duyệt. Vui lòng chờ!",
+      });
+    }
+
     // Kiểm tra serial number trùng lặp
     const existingDrone = await Drone.findOne({ serialNumber });
     if (existingDrone) {

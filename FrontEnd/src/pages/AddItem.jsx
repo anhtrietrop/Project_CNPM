@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,7 @@ import axios from "axios";
 import { setMyShopData } from "../redux/ownerSlice";
 import { serverURL } from "../App.jsx";
 import { ClipLoader } from "react-spinners";
+import { useToast } from "../hooks/useToast.jsx";
 // import { set } from "mongoose";
 function AddItem() {
   const navigate = useNavigate();
@@ -19,6 +20,22 @@ function AddItem() {
   const dispatch = useDispatch();
   const [backendImage, setBackendImage] = useState(null);
   const [catetory, setCatetory] = useState("");
+  const toast = useToast();
+
+  // Kiểm tra shop đã được duyệt chưa
+  useEffect(() => {
+    if (!myShopData) {
+      toast.error("Bạn chưa có nhà hàng!");
+      navigate("/");
+      return;
+    }
+    
+    if (!myShopData.isApproved) {
+      toast.error("Nhà hàng của bạn chưa được Admin duyệt. Vui lòng chờ!");
+      navigate("/");
+      return;
+    }
+  }, [myShopData, navigate, toast]);
 
   const categories = [
     "Burgers",
@@ -56,10 +73,12 @@ function AddItem() {
       );
       dispatch(setMyShopData(result.data));
       setLoading(false);
+      toast.success("Thêm món ăn thành công!");
       navigate("/"); // Navigate back to home after successful creation
     } catch (error) {
       console.log(error);
       setLoading(false);
+      toast.error(error.response?.data?.message || "Lỗi khi thêm món ăn!");
       navigate("/"); // Navigate back to home even if there's an error
     }
   };

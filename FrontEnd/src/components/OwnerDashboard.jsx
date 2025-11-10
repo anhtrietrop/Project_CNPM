@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import Nav from "./Nav.jsx";
-import { FaUtensils } from "react-icons/fa";
+import { FaUtensils, FaPen, FaClock, FaCheck, FaTimes } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import useGetMyShop from "../hooks/useGetMyShop.jsx";
 import OwnerItemCard from "./ownerItemCard.jsx";
-import { FaPen } from "react-icons/fa";
 import MyOrders from "./MyOrders.jsx";
 import DroneManagement from "./DroneManagement.jsx";
 
@@ -94,6 +93,41 @@ function OwnerDashboard() {
                 <FaUtensils className="text-[#3399df] w-14 h-14 " />
                 Welcome to {myShopData.name}{" "}
               </h1>
+
+              {/* Approval Status Banner */}
+              {!myShopData.isApproved && (
+                <div className="w-full max-w-3xl bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-md">
+                  <div className="flex items-start gap-3">
+                    <FaClock className="text-yellow-500 text-2xl mt-1" />
+                    <div className="flex-1">
+                      <h3 className="font-bold text-yellow-800 mb-1">Đang chờ Admin duyệt</h3>
+                      <p className="text-yellow-700 text-sm">
+                        Nhà hàng của bạn đang được xem xét. Bạn chỉ có thể thêm món ăn sau khi Admin duyệt nhà hàng.
+                      </p>
+                      {myShopData.rejectedReason && (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                          <strong>Lý do từ chối:</strong> {myShopData.rejectedReason}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {myShopData.isApproved && (
+                <div className="w-full max-w-3xl bg-green-50 border-l-4 border-green-400 p-4 rounded-lg shadow-md">
+                  <div className="flex items-start gap-3">
+                    <FaCheck className="text-green-500 text-2xl mt-1" />
+                    <div>
+                      <h3 className="font-bold text-green-800 mb-1">Nhà hàng đã được duyệt</h3>
+                      <p className="text-green-700 text-sm">
+                        Nhà hàng của bạn đang hoạt động và hiển thị cho khách hàng!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-blue-100 hover:shadow-2xl transition-all duration-300 w-full max-w-3xl relative">
                 <img
                   src={myShopData.image}
@@ -136,10 +170,15 @@ function OwnerDashboard() {
                         Add your delicious food
                       </p>
                       <button
-                        className="bg-[#3399df] text-white px-5 sm:px-6 py-2 rounded-full font-medium shadow-md hover:bg-blue-600 transition-colors duration-200 "
-                        onClick={() => navigate("/add-item")}
+                        className={`px-5 sm:px-6 py-2 rounded-full font-medium shadow-md transition-colors duration-200 ${
+                          myShopData.isApproved
+                            ? "bg-[#3399df] text-white hover:bg-blue-600"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        }`}
+                        onClick={() => myShopData.isApproved && navigate("/add-item")}
+                        disabled={!myShopData.isApproved}
                       >
-                        Add Food
+                        {myShopData.isApproved ? "Add Food" : "Chờ duyệt"}
                       </button>
                     </div>
                   </div>

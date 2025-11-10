@@ -6,6 +6,7 @@ import { FaUtensils } from "react-icons/fa";
 import axios from "axios";
 import { setMyShopData } from "../redux/ownerSlice";
 import { serverURL } from "../App.jsx";
+import { useToast } from "../hooks/useToast.jsx";
 
 import { ClipLoader } from "react-spinners";
 
@@ -22,6 +23,23 @@ function EditItem() {
   const [backendImage, setBackendImage] = useState(null);
   const [catetory, setCatetory] = useState("");
   const [loanding, setLoading] = useState(false);
+  const toast = useToast();
+
+  // Kiểm tra shop đã được duyệt chưa
+  useEffect(() => {
+    if (!myShopData) {
+      toast.error("Bạn chưa có nhà hàng!");
+      navigate("/");
+      return;
+    }
+    
+    if (!myShopData.isApproved) {
+      toast.error("Nhà hàng của bạn chưa được Admin duyệt. Vui lòng chờ!");
+      navigate("/");
+      return;
+    }
+  }, [myShopData, navigate, toast]);
+
   const categories = [
     "Burgers",
     "Sandwiches",

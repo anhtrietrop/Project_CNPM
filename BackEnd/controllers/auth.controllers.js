@@ -33,7 +33,7 @@ export const signUp = async (req, res) => {
     // SỬA: res.cookies() → res.cookie() và sửa template string
     res.cookie("token", token, {
       secure: false,
-      sameSite: "strict",
+      sameSite: "lax", // Cho phép cookie với CORS
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });
@@ -68,7 +68,7 @@ export const signIn = async (req, res) => {
     // SỬA: res.cookies() → res.cookie()
     res.cookie("token", token, {
       secure: false,
-      sameSite: "strict",
+      sameSite: "lax", // Cho phép cookie với CORS
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });

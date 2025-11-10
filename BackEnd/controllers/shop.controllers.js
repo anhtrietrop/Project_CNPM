@@ -17,13 +17,14 @@ export const createEditShop = async (req, res) => {
     let shop = await Shop.findOne({ owner: req.userId });
 
     if (!shop) {
-      // ✅ tạo shop mới
+      // ✅ tạo shop mới - mặc định chờ duyệt
       const shopData = {
         name,
         city,
         state,
         address,
         owner: req.userId,
+        isApproved: false, // Chờ admin duyệt
       };
       if (image) {
         shopData.image = image;
@@ -70,18 +71,16 @@ export const getShopByCity = async (req, res) => {
     const { city } = req.params;
     
     // Tìm kiếm linh hoạt cho Ho Chi Minh
-    let query = {};
+    let query = { isApproved: true }; // ✅ Chỉ lấy shop đã được duyệt
     if (city.toLowerCase().includes("ho chi minh") || city.toLowerCase().includes("hcm")) {
       // Tìm cả "Ho Chi Minh" và "Ho Chi Minh City"
-      query = {
-        $or: [
-          { city: { $regex: /ho chi minh/i } },
-          { city: { $regex: /hcm/i } }
-        ]
-      };
+      query.$or = [
+        { city: { $regex: /ho chi minh/i } },
+        { city: { $regex: /hcm/i } }
+      ];
     } else {
       // Tìm kiếm bình thường cho các thành phố khác
-      query = { city: { $regex: new RegExp(city, "i") } };
+      query.city = { $regex: new RegExp(city, "i") };
     }
     
     const shops = await Shop.find(query).populate("items");

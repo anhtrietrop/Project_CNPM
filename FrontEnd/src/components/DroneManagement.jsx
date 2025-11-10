@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { serverURL } from "../App.jsx";
+import { useSelector } from "react-redux";
+import { useToast } from "../hooks/useToast.jsx";
 import {
   FaHelicopter,
   FaPlus,
@@ -17,6 +19,7 @@ import {
 import Loading from "./Loading.jsx";
 
 const DroneManagement = () => {
+  const { myShopData } = useSelector((state) => state.owner);
   const [drones, setDrones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,6 +32,7 @@ const DroneManagement = () => {
   const [showBatteryModal, setShowBatteryModal] = useState(false);
   const [selectedDrone, setSelectedDrone] = useState(null);
   const [batteryPercentage, setBatteryPercentage] = useState(100);
+  const toast = useToast();
 
   useEffect(() => {
     fetchDrones();
@@ -52,6 +56,12 @@ const DroneManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Kiểm tra shop đã được duyệt chưa
+    if (!myShopData?.isApproved) {
+      toast.error("Nhà hàng của bạn chưa được Admin duyệt. Vui lòng chờ để thêm drone!");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -62,13 +72,13 @@ const DroneManagement = () => {
           formData,
           { withCredentials: true }
         );
-        alert("Cập nhật drone thành công!");
+        toast.success("Cập nhật drone thành công!");
       } else {
         // Create drone
         await axios.post(`${serverURL}/api/drone`, formData, {
           withCredentials: true,
         });
-        alert("Tạo drone thành công!");
+        toast.success("Tạo drone thành công!");
       }
 
       setShowModal(false);
@@ -76,7 +86,7 @@ const DroneManagement = () => {
       fetchDrones();
     } catch (err) {
       console.error("Error saving drone:", err);
-      alert(err.response?.data?.message || "Lỗi khi lưu drone!");
+      toast.error(err.response?.data?.message || "Lỗi khi lưu drone!");
     } finally {
       setLoading(false);
     }
@@ -92,11 +102,11 @@ const DroneManagement = () => {
       await axios.delete(`${serverURL}/api/drone/${droneId}`, {
         withCredentials: true,
       });
-      alert("Xóa drone thành công!");
+      toast.success("Xóa drone thành công!");
       fetchDrones();
     } catch (err) {
       console.error("Error deleting drone:", err);
-      alert(err.response?.data?.message || "Lỗi khi xóa drone!");
+      toast.error(err.response?.data?.message || "Lỗi khi xóa drone!");
     } finally {
       setLoading(false);
     }
@@ -129,7 +139,7 @@ const DroneManagement = () => {
     if (!selectedDrone) return;
 
     if (batteryPercentage < 0 || batteryPercentage > 100) {
-      alert("Phần trăm pin phải từ 0 đến 100!");
+      toast.error("Phần trăm pin phải từ 0 đến 100!");
       return;
     }
 
@@ -142,13 +152,13 @@ const DroneManagement = () => {
         { withCredentials: true }
       );
 
-      alert("Cập nhật pin drone thành công!");
+      toast.success("Cập nhật pin drone thành công!");
       setShowBatteryModal(false);
       setSelectedDrone(null);
       fetchDrones();
     } catch (err) {
       console.error("Error updating drone battery:", err);
-      alert(err.response?.data?.message || "Lỗi khi cập nhật pin drone!");
+      toast.error(err.response?.data?.message || "Lỗi khi cập nhật pin drone!");
     } finally {
       setLoading(false);
     }
