@@ -356,19 +356,4 @@ net start MongoDB
 ## 👥 Contributors
 
 - **Anh Triet** - [@anhtrietrop](https://github.com/anhtrietrop)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 📞 Support
-
-Nếu gặp vấn đề, vui lòng tạo issue tại: [GitHub Issues](https://github.com/anhtrietrop/Project_CNPM/issues)
-
----
-
-**Chúc bạn code vui vẻ! 🚀**
+- **Minh Thu** - [@Thuelsa](https://github.com/Thuelsa)
