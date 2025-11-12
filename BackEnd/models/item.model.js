@@ -16,16 +16,8 @@ const itemSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: [
-        "Burgers",
-        "Sandwiches",
-        "Fried",
-        "Desserts",
-        "Drinks",
-        "Tacos",
-        "Others",
-      ],
       require: true,
+      // Không dùng enum nữa, lấy từ shop.categories
     },
     price: {
       type: Number,

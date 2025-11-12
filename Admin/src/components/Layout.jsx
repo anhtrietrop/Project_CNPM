@@ -45,7 +45,9 @@ const Layout = ({ children }) => {
                 <span className="text-white font-bold text-xl">🚁</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-800">FastFood Drone</h1>
+                <h1 className="text-lg font-bold text-gray-800">
+                  FastFood Drone
+                </h1>
                 <p className="text-xs text-gray-500">Quản trị</p>
               </div>
             </div>
@@ -74,7 +76,9 @@ const Layout = ({ children }) => {
                 }`}
               >
                 <Icon size={20} />
-                {sidebarOpen && <span className="font-medium">{item.label}</span>}
+                {sidebarOpen && (
+                  <span className="font-medium">{item.label}</span>
+                )}
               </button>
             );
           })}
@@ -82,7 +86,11 @@ const Layout = ({ children }) => {
 
         {/* Admin Info */}
         <div className="p-4 border-t">
-          <div className={`flex items-center ${sidebarOpen ? "gap-3" : "justify-center"}`}>
+          <div
+            className={`flex items-center ${
+              sidebarOpen ? "gap-3" : "justify-center"
+            }`}
+          >
             <div className="w-10 h-10 bg-[#3399df] rounded-full flex items-center justify-center text-white font-bold">
               {adminData?.fullName?.charAt(0) || "A"}
             </div>
@@ -91,7 +99,9 @@ const Layout = ({ children }) => {
                 <p className="font-semibold text-gray-800 text-sm">
                   {adminData?.fullName || "Admin"}
                 </p>
-                <p className="text-xs text-gray-500">{adminData?.email || ""}</p>
+                <p className="text-xs text-gray-500">
+                  {adminData?.email || ""}
+                </p>
               </div>
             )}
           </div>

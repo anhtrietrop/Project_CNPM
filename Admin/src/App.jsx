@@ -25,11 +25,15 @@ function App() {
         />
         <Route
           path="/users"
-          element={isAuthenticated ? <UserManagement /> : <Navigate to="/signin" />}
+          element={
+            isAuthenticated ? <UserManagement /> : <Navigate to="/signin" />
+          }
         />
         <Route
           path="/shops"
-          element={isAuthenticated ? <ShopManagement /> : <Navigate to="/signin" />}
+          element={
+            isAuthenticated ? <ShopManagement /> : <Navigate to="/signin" />
+          }
         />
       </Routes>
     </BrowserRouter>

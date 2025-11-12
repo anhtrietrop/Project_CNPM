@@ -4,13 +4,51 @@ import fs from "fs";
 
 export const createEditShop = async (req, res) => {
   try {
-    const { name, city, state, address } = req.body;
-    let image = null;
+    const {
+      name,
+      city,
+      state,
+      address,
+      categories,
+      contactPhone,
+      contactEmail,
+      representativeName,
+      bankAccountNumber,
+      bankAccountName,
+      bankName,
+      operatingHours,
+    } = req.body;
 
-    // ✅ upload ảnh nếu có
-    if (req.file) {
-      image = await uploadOnCloudinary(req.file.path);
-      // Không cần xóa file ở đây vì uploadOnCloudinary đã xóa rồi
+    // Upload các loại ảnh
+    let imageUrl = null;
+    let idCardUrl = null;
+    let menuImagesUrls = [];
+
+    // Logo shop
+    if (req.files?.image?.[0]) {
+      imageUrl = await uploadOnCloudinary(req.files.image[0].path);
+    }
+
+    // CCCD
+    if (req.files?.representativeIdCard?.[0]) {
+      idCardUrl = await uploadOnCloudinary(
+        req.files.representativeIdCard[0].path
+      );
+    }
+
+    // Menu images
+    if (req.files?.menuImages) {
+      for (const file of req.files.menuImages) {
+        const url = await uploadOnCloudinary(file.path);
+        menuImagesUrls.push(url);
+      }
+    }
+
+    // Parse categories nếu gửi dưới dạng JSON string
+    let parsedCategories = [];
+    if (categories) {
+      parsedCategories =
+        typeof categories === "string" ? JSON.parse(categories) : categories;
     }
 
     // ✅ tìm shop của user
@@ -25,16 +63,40 @@ export const createEditShop = async (req, res) => {
         address,
         owner: req.userId,
         isApproved: false, // Chờ admin duyệt
+        categories: parsedCategories || [],
+        contactPhone,
+        contactEmail,
+        representativeName,
+        bankAccountNumber,
+        bankAccountName,
+        bankName,
+        operatingHours,
       };
-      if (image) {
-        shopData.image = image;
-      }
+      if (imageUrl) shopData.image = imageUrl;
+      if (idCardUrl) shopData.representativeIdCard = idCardUrl;
+      if (menuImagesUrls.length > 0) shopData.menuImages = menuImagesUrls;
+
       shop = await Shop.create(shopData);
     } else {
       // ✅ cập nhật shop cũ
-      const updateData = { name, city, state, address };
-      if (image) {
-        updateData.image = image;
+      const updateData = {
+        name,
+        city,
+        state,
+        address,
+        contactPhone,
+        contactEmail,
+        representativeName,
+        bankAccountNumber,
+        bankAccountName,
+        bankName,
+        operatingHours,
+      };
+      if (imageUrl) updateData.image = imageUrl;
+      if (idCardUrl) updateData.representativeIdCard = idCardUrl;
+      if (menuImagesUrls.length > 0) updateData.menuImages = menuImagesUrls;
+      if (parsedCategories && parsedCategories.length > 0) {
+        updateData.categories = parsedCategories;
       }
       shop = await Shop.findByIdAndUpdate(shop._id, updateData, { new: true });
     }
@@ -69,20 +131,23 @@ export const getMyShop = async (req, res) => {
 export const getShopByCity = async (req, res) => {
   try {
     const { city } = req.params;
-    
+
     // Tìm kiếm linh hoạt cho Ho Chi Minh
     let query = { isApproved: true }; // ✅ Chỉ lấy shop đã được duyệt
-    if (city.toLowerCase().includes("ho chi minh") || city.toLowerCase().includes("hcm")) {
+    if (
+      city.toLowerCase().includes("ho chi minh") ||
+      city.toLowerCase().includes("hcm")
+    ) {
       // Tìm cả "Ho Chi Minh" và "Ho Chi Minh City"
       query.$or = [
         { city: { $regex: /ho chi minh/i } },
-        { city: { $regex: /hcm/i } }
+        { city: { $regex: /hcm/i } },
       ];
     } else {
       // Tìm kiếm bình thường cho các thành phố khác
       query.city = { $regex: new RegExp(city, "i") };
     }
-    
+
     const shops = await Shop.find(query).populate("items");
     if (!shops || shops.length === 0) {
       return res.status(404).json({ message: "No shops found in this city" });

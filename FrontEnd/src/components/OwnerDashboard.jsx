@@ -70,18 +70,17 @@ function OwnerDashboard() {
                 <div className="flex flex-col items-center text-center">
                   <FaUtensils className="text-[#3399df] w-16 h-16 sm:w-20 sm:h-20 mb-4" />
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 ">
-                    {" "}
-                    Add Your Restaurant
+                    Thêm nhà hàng của bạn
                   </h2>
                   <p className="text-gray-600 mb-4 text-sm sm:text-base">
-                    Join our fastfood delivery platform and reach thousands of
-                    hungry customers every day
+                    Tham gia nền tảng giao đồ ăn nhanh của chúng tôi và tiếp cận
+                    hàng nghìn khách hàng mỗi ngày
                   </p>
                   <button
                     className="bg-[#3399df] text-white px-5 sm:px-6 py-2 rounded-full font-medium shadow-md hover:bg-blue-600 transition-colors duration-200 "
                     onClick={() => navigate("/create-edit-shop")}
                   >
-                    Get Started
+                    Bắt đầu ngay
                   </button>
                 </div>
               </div>
@@ -91,7 +90,7 @@ function OwnerDashboard() {
             <div className="w-full flex flex-col items-center gap-6 px-4 sm:px-6">
               <h1 className="text-2xl sm:text-3xl text-gray-900 flex items-center gap-3 mt-8 text-center">
                 <FaUtensils className="text-[#3399df] w-14 h-14 " />
-                Welcome to {myShopData.name}{" "}
+                Chào mừng đến {myShopData.name}
               </h1>
 
               {/* Approval Status Banner */}
@@ -100,13 +99,17 @@ function OwnerDashboard() {
                   <div className="flex items-start gap-3">
                     <FaClock className="text-yellow-500 text-2xl mt-1" />
                     <div className="flex-1">
-                      <h3 className="font-bold text-yellow-800 mb-1">Đang chờ Admin duyệt</h3>
+                      <h3 className="font-bold text-yellow-800 mb-1">
+                        Đang chờ Admin duyệt
+                      </h3>
                       <p className="text-yellow-700 text-sm">
-                        Nhà hàng của bạn đang được xem xét. Bạn chỉ có thể thêm món ăn sau khi Admin duyệt nhà hàng.
+                        Nhà hàng của bạn đang được xem xét. Bạn chỉ có thể thêm
+                        món ăn sau khi Admin duyệt nhà hàng.
                       </p>
                       {myShopData.rejectedReason && (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                          <strong>Lý do từ chối:</strong> {myShopData.rejectedReason}
+                          <strong>Lý do từ chối:</strong>{" "}
+                          {myShopData.rejectedReason}
                         </div>
                       )}
                     </div>
@@ -119,9 +122,12 @@ function OwnerDashboard() {
                   <div className="flex items-start gap-3">
                     <FaCheck className="text-green-500 text-2xl mt-1" />
                     <div>
-                      <h3 className="font-bold text-green-800 mb-1">Nhà hàng đã được duyệt</h3>
+                      <h3 className="font-bold text-green-800 mb-1">
+                        Nhà hàng đã được duyệt
+                      </h3>
                       <p className="text-green-700 text-sm">
-                        Nhà hàng của bạn đang hoạt động và hiển thị cho khách hàng!
+                        Nhà hàng của bạn đang hoạt động và hiển thị cho khách
+                        hàng!
                       </p>
                     </div>
                   </div>
@@ -147,11 +153,11 @@ function OwnerDashboard() {
                   </h2>
                   <div className="space-y-2">
                     <p className="text-gray-600">
-                      <span className="font-medium">Location:</span>{" "}
+                      <span className="font-medium">Vị trí:</span>{" "}
                       {myShopData.city}, {myShopData.state}
                     </p>
                     <p className="text-gray-600">
-                      <span className="font-medium">Address:</span>{" "}
+                      <span className="font-medium">Địa chỉ:</span>{" "}
                       {myShopData.address}
                     </p>
                   </div>
@@ -163,11 +169,10 @@ function OwnerDashboard() {
                     <div className="flex flex-col items-center text-center">
                       <FaUtensils className="text-[#3399df] w-16 h-16 sm:w-20 sm:h-20 mb-4" />
                       <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 ">
-                        {" "}
-                        Add Your Food Item
+                        Thêm món ăn của bạn
                       </h2>
                       <p className="text-gray-600 mb-4 text-sm sm:text-base">
-                        Add your delicious food
+                        Thêm những món ăn ngon của bạn
                       </p>
                       <button
                         className={`px-5 sm:px-6 py-2 rounded-full font-medium shadow-md transition-colors duration-200 ${
@@ -175,10 +180,12 @@ function OwnerDashboard() {
                             ? "bg-[#3399df] text-white hover:bg-blue-600"
                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
                         }`}
-                        onClick={() => myShopData.isApproved && navigate("/add-item")}
+                        onClick={() =>
+                          myShopData.isApproved && navigate("/add-item")
+                        }
                         disabled={!myShopData.isApproved}
                       >
-                        {myShopData.isApproved ? "Add Food" : "Chờ duyệt"}
+                        {myShopData.isApproved ? "Thêm món ăn" : "Chờ duyệt"}
                       </button>
                     </div>
                   </div>

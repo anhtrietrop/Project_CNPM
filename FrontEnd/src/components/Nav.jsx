@@ -174,7 +174,7 @@ function Nav() {
                 </div>
                 {userData?.role == "user" && (
                   <div className=" md:hidden text-[#3399df] font-semibold cursor-pointer">
-                    My Orders
+                    Đơn hàng của tôi
                   </div>
                 )}
 
@@ -182,7 +182,7 @@ function Nav() {
                   className="text-[#3399df] font-semibold cursor-pointer"
                   onClick={handleLogOut}
                 >
-                  Log Out
+                  Đăng xuất
                 </div>
               </div>
             )}

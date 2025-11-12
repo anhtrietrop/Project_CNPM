@@ -32,6 +32,50 @@ const shopSchema = new mongoose.Schema(
         ref: "Item",
       },
     ],
+    categories: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    // Thông tin liên hệ
+    contactPhone: {
+      type: String,
+      require: true,
+    },
+    contactEmail: {
+      type: String,
+    },
+    // Thông tin người đại diện
+    representativeName: {
+      type: String,
+      require: true,
+    },
+    representativeIdCard: {
+      type: String, // Ảnh CCCD
+    },
+    // Thông tin thanh toán
+    bankAccountNumber: {
+      type: String,
+      require: true,
+    },
+    bankAccountName: {
+      type: String,
+      require: true,
+    },
+    bankName: {
+      type: String,
+    },
+    // Ảnh bổ sung
+    menuImages: [
+      {
+        type: String, // Array ảnh menu
+      },
+    ],
+    // Giờ hoạt động
+    operatingHours: {
+      type: String,
+    },
     isApproved: {
       type: Boolean,
       default: false,

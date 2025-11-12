@@ -32,7 +32,7 @@ function EditItem() {
       navigate("/");
       return;
     }
-    
+
     if (!myShopData.isApproved) {
       toast.error("Nhà hàng của bạn chưa được Admin duyệt. Vui lòng chờ!");
       navigate("/");
@@ -40,7 +40,7 @@ function EditItem() {
     }
   }, [myShopData, navigate, toast]);
 
-  const categories = [
+  const categories = myShopData?.categories || [
     "Burgers",
     "Sandwiches",
     "Fried",
@@ -118,16 +118,18 @@ function EditItem() {
           <div className="bg-blue-100 p-4 rounded-full mb-4">
             <FaUtensils className="text-[#00BFFF] w-16 h-16" />
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">Edit Food</div>
+          <div className="text-3xl font-extrabold text-gray-900">
+            Chỉnh sửa món ăn
+          </div>
         </div>
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
+              Tên món ăn
             </label>
             <input
               type="text"
-              placeholder="Enter Shop Name"
+              placeholder="Nhập tên món ăn"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setName(e.target.value)}
               value={name}
@@ -136,7 +138,7 @@ function EditItem() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Food Image
+              Hình ảnh món ăn
             </label>
 
             <input
@@ -159,7 +161,7 @@ function EditItem() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
+              Giá (VNĐ)
             </label>
             <input
               type="number"
@@ -184,7 +186,7 @@ function EditItem() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Category
+              Danh mục
             </label>
             <select
               type="number"
@@ -192,7 +194,7 @@ function EditItem() {
               onChange={(e) => setCatetory(e.target.value)}
               value={catetory}
             >
-              <option value="">select Category</option>
+              <option value="">Chọn danh mục</option>
               {categories.map((cate, index) => (
                 <option value={cate} key={index}>
                   {cate}
@@ -205,7 +207,7 @@ function EditItem() {
             className="w-full bg-[#00BFFF] text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-600 hover:shadow-lg transition-all duration-200 cursor-pointer"
             disabled={loanding}
           >
-            {loanding ? <ClipLoader color="white" size={20} /> : "Save"}
+            {loanding ? <ClipLoader color="white" size={20} /> : "Lưu thay đổi"}
           </button>
         </form>
       </div>

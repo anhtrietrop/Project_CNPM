@@ -1,0 +1,233 @@
+@startuml FastFood Drone Delivery - Component Diagram
+
+!define ICONURL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v2.4.0
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FFFFFF
+skinparam component {
+    BackgroundColor<<client>> #E8F5E9
+    BackgroundColor<<server>> #FFF9C4
+    BackgroundColor<<database>> #E3F2FD
+    BackgroundColor<<external>> #FFEBEE
+}
+
+' ==================== CLIENT LAYER ====================
+package "Client Layer" <<client>> {
+    
+    component "Customer GUI" <<component>> {
+        component "User Session" <<component>>
+        component "Order Tracking" <<component>>
+        component "Payment Gateway" <<component>>
+    }
+    
+    component "Owner Dashboard" <<component>> {
+        component "Shop Management" <<component>>
+        component "Item Management" <<component>>
+        component "Order Management" <<component>>
+        component "Drone Management" <<component>>
+    }
+    
+    component "Admin Dashboard" <<component>> {
+        component "User Management" <<component>>
+        component "Shop Approval" <<component>>
+        component "System Monitor" <<component>>
+    }
+}
+
+' ==================== SERVER LAYER ====================
+package "Server Layer" <<server>> {
+    
+    component "API Gateway" <<component>> {
+        component "Express Server" <<component>>
+        component "CORS Middleware" <<component>>
+        component "Cookie Parser" <<component>>
+    }
+    
+    component "Authentication Service" <<component>> {
+        component "Auth Controller" <<component>>
+        component "JWT Token" <<component>>
+        component "isAuth Middleware" <<component>>
+        component "isAdmin Middleware" <<component>>
+    }
+    
+    component "User Service" <<component>> {
+        component "User Controller" <<component>>
+        component "Role Controller" <<component>>
+    }
+    
+    component "Shop Service" <<component>> {
+        component "Shop Controller" <<component>>
+        component "Item Controller" <<component>>
+        component "Multer Upload" <<component>>
+        component "Cloudinary" <<component>>
+    }
+    
+    component "Order Service" <<component>> {
+        component "Order Controller" <<component>>
+        component "Cart Controller" <<component>>
+        component "Delivery Controller" <<component>>
+    }
+    
+    component "Drone Management Service" <<component>> {
+        component "Drone Controller" <<component>>
+        component "Battery Monitor" <<component>>
+        component "Auto Assignment" <<component>>
+    }
+    
+    component "Payment Processing Service" <<component>> {
+        component "Payment Controller" <<component>>
+        component "VNPay Gateway" <<component>>
+    }
+    
+    component "Location Service" <<component>> {
+        component "Location Controller" <<component>>
+    }
+    
+    component "Admin Service" <<component>> {
+        component "Admin Controller" <<component>>
+        component "Shop Approval System" <<component>>
+    }
+}
+
+' ==================== DATABASE LAYER ====================
+package "Database Layer" <<database>> {
+    component "MongoDB" <<component>> {
+        database "User Model" as UserDB
+        database "Shop Model" as ShopDB
+        database "Item Model" as ItemDB
+        database "Order Model" as OrderDB
+        database "Cart Model" as CartDB
+        database "Drone Model" as DroneDB
+        database "Delivery Model" as DeliveryDB
+        database "Payment Model" as PaymentDB
+        database "Location Model" as LocationDB
+        database "Role Model" as RoleDB
+        database "Rating Model" as RatingDB
+    }
+}
+
+' ==================== EXTERNAL SYSTEMS ====================
+package "External Systems" <<external>> {
+    component "VNPay API" <<component>>
+    component "Cloudinary API" <<component>>
+    component "Maps & GPS API" <<component>>
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' Client to Server
+[Customer GUI] --> [API Gateway] : HTTP/REST
+[Owner Dashboard] --> [API Gateway] : HTTP/REST
+[Admin Dashboard] --> [API Gateway] : HTTP/REST
+
+' API Gateway to Services
+[API Gateway] --> [Authentication Service]
+[API Gateway] --> [User Service]
+[API Gateway] --> [Shop Service]
+[API Gateway] --> [Order Service]
+[API Gateway] --> [Drone Management Service]
+[API Gateway] --> [Payment Processing Service]
+[API Gateway] --> [Location Service]
+[API Gateway] --> [Admin Service]
+
+' Authentication flows
+[Authentication Service] ..> [User Service] : validate
+[Authentication Service] ..> [Admin Service] : admin check
+
+' Shop Service flows
+[Shop Service] --> [Cloudinary API] : upload images
+[Owner Dashboard] --> [Shop Service] : manage shop
+[Owner Dashboard] --> [Order Service] : track orders
+[Owner Dashboard] --> [Drone Management Service] : manage drones
+
+' Order Service flows
+[Order Service] --> [Drone Management Service] : assign drone
+[Order Service] --> [Payment Processing Service] : process payment
+[Order Service] --> [Location Service] : get coordinates
+
+' Payment flows
+[Payment Processing Service] --> [VNPay API] : payment gateway
+
+' Location flows
+[Location Service] --> [Maps & GPS API] : geocoding
+
+' Admin flows
+[Admin Dashboard] --> [Admin Service] : approve shops
+[Admin Service] --> [Shop Service] : update approval
+[Admin Service] --> [User Service] : manage users
+
+' Services to Database
+[User Service] --> [UserDB]
+[User Service] --> [RoleDB]
+[Shop Service] --> [ShopDB]
+[Shop Service] --> [ItemDB]
+[Order Service] --> [OrderDB]
+[Order Service] --> [CartDB]
+[Order Service] --> [DeliveryDB]
+[Drone Management Service] --> [DroneDB]
+[Payment Processing Service] --> [PaymentDB]
+[Location Service] --> [LocationDB]
+[Admin Service] --> [UserDB]
+[Admin Service] --> [ShopDB]
+
+' Rating stored in localStorage (not using backend)
+[Customer GUI] ..> [RatingDB] : localStorage only
+
+note right of [API Gateway]
+  Port: 8000
+  CORS enabled for:
+  - localhost:5173 (User)
+  - localhost:5174 (Admin)
+  - localhost:5175 (Test)
+end note
+
+note right of [Customer GUI]
+  Port: 5173
+  React + Vite
+  Redux Toolkit
+end note
+
+note right of [Owner Dashboard]
+  Port: 5173
+  Same app as Customer
+  Role-based routing
+end note
+
+note right of [Admin Dashboard]
+  Port: 5174
+  Separate React app
+  Admin-only access
+end note
+
+note right of [MongoDB]
+  11 Collections:
+  - users
+  - shops
+  - items
+  - orders
+  - carts
+  - drones
+  - deliveries
+  - payments
+  - locations
+  - roles
+  - ratings
+end note
+
+note right of [Drone Management Service]
+  Features:
+  - Battery monitoring
+  - Auto assignment
+  - Status tracking
+  - Shop assignment
+end note
+
+note right of [Shop Service]
+  Features:
+  - Multi-file upload
+  - Category management
+  - Approval workflow
+  - Image processing
+end note
+
+@enduml

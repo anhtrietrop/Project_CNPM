@@ -29,7 +29,7 @@ function AddItem() {
       navigate("/");
       return;
     }
-    
+
     if (!myShopData.isApproved) {
       toast.error("Nhà hàng của bạn chưa được Admin duyệt. Vui lòng chờ!");
       navigate("/");
@@ -37,7 +37,7 @@ function AddItem() {
     }
   }, [myShopData, navigate, toast]);
 
-  const categories = [
+  const categories = myShopData?.categories || [
     "Burgers",
     "Sandwiches",
     "Fried",
@@ -95,16 +95,18 @@ function AddItem() {
           <div className="bg-blue-100 p-4 rounded-full mb-4">
             <FaUtensils className="text-[#00BFFF] w-16 h-16" />
           </div>
-          <div className="text-3xl font-extrabold text-gray-900">Add Food</div>
+          <div className="text-3xl font-extrabold text-gray-900">
+            Thêm món ăn
+          </div>
         </div>
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
+              Tên món ăn
             </label>
             <input
               type="text"
-              placeholder="Enter Food Name"
+              placeholder="Nhập tên món ăn"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setName(e.target.value)}
               value={name}
@@ -113,7 +115,7 @@ function AddItem() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Food Image
+              Hình ảnh món ăn
             </label>
 
             <input
@@ -136,7 +138,7 @@ function AddItem() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
+              Giá (VNĐ)
             </label>
             <input
               type="number"
@@ -161,7 +163,7 @@ function AddItem() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Select Category
+              Danh mục
             </label>
             <select
               type="number"
@@ -169,7 +171,7 @@ function AddItem() {
               onChange={(e) => setCatetory(e.target.value)}
               value={catetory}
             >
-              <option value="">select Category</option>
+              <option value="">Chọn danh mục</option>
               {categories.map((cate, index) => (
                 <option value={cate} key={index}>
                   {cate}
@@ -182,7 +184,7 @@ function AddItem() {
             className="w-full bg-[#00BFFF] text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-600 hover:shadow-lg transition-all duration-200 cursor-pointer"
             disabled={loading}
           >
-            {loading ? <ClipLoader color="white" size={20} /> : "Add Food"}
+            {loading ? <ClipLoader color="white" size={20} /> : "Thêm món ăn"}
           </button>
         </form>
       </div>

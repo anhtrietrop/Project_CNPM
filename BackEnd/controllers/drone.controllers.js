@@ -389,4 +389,3 @@ export const updateDroneBattery = async (req, res) => {
     });
   }
 };
-

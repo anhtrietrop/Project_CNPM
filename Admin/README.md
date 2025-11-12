@@ -13,21 +13,25 @@ Dashboard sẽ chạy trên: http://localhost:5174
 ## 📋 Chức năng
 
 ### 1. Đăng nhập Admin
+
 - Chỉ tài khoản có role="admin" mới đăng nhập được
 - Sử dụng email/password đã tạo trong database
 
 ### 2. Dashboard (Trang chủ)
+
 - Thống kê tổng quan: Users, Shops, Orders, Revenue
 - Hiển thị số Drone đang hoạt động/nhàn rỗi
 - Cảnh báo Shop chờ duyệt
 
 ### 3. User Management
+
 - Xem danh sách tất cả users
 - Lọc theo role: All / User / Owner / Admin
 - Tìm kiếm theo tên, email, phone
 - Xóa user (không xóa được admin)
 
 ### 4. Shop Management ⭐ QUAN TRỌNG
+
 - Xem danh sách nhà hàng
 - Lọc: All / Chờ duyệt / Đã duyệt
 - **Duyệt nhà hàng**: Nhà hàng mới xuất hiện trên User Dashboard
@@ -88,8 +92,5 @@ Nếu chưa có admin, tạo trong MongoDB:
 Hoặc đăng ký user thường, sau đó update role:
 
 ```javascript
-db.users.updateOne(
-  { email: "your@email.com" },
-  { $set: { role: "admin" } }
-)
+db.users.updateOne({ email: "your@email.com" }, { $set: { role: "admin" } });
 ```

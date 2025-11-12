@@ -75,7 +75,13 @@ const UserManagement = () => {
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                {role === "all" ? "Tất cả" : role === "user" ? "User" : role === "owner" ? "Owner" : "Admin"}
+                {role === "all"
+                  ? "Tất cả"
+                  : role === "user"
+                  ? "User"
+                  : role === "owner"
+                  ? "Owner"
+                  : "Admin"}
               </button>
             ))}
           </div>
@@ -122,13 +128,19 @@ const UserManagement = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                <td
+                  colSpan="6"
+                  className="px-6 py-12 text-center text-gray-500"
+                >
                   Đang tải...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                <td
+                  colSpan="6"
+                  className="px-6 py-12 text-center text-gray-500"
+                >
                   Không tìm thấy người dùng
                 </td>
               </tr>
@@ -141,7 +153,9 @@ const UserManagement = () => {
                         {user.fullName.charAt(0)}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.fullName}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.fullName}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -152,7 +166,11 @@ const UserManagement = () => {
                     {user.mobile || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadge(user.role)}`}>
+                    <span
+                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadge(
+                        user.role
+                      )}`}
+                    >
                       {user.role}
                     </span>
                   </td>

@@ -13,7 +13,7 @@ const createAdmin = async () => {
 
     // Tạo admin mới
     const hashedPassword = await bcrypt.hash("admin123", 10);
-    
+
     const admin = await User.create({
       fullName: "Admin",
       email: "admin@example.com",

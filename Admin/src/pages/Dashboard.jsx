@@ -39,7 +39,9 @@ const Dashboard = () => {
           <p className="text-gray-600 text-sm mb-1">{label}</p>
           <p className="text-3xl font-bold text-gray-800">{value}</p>
         </div>
-        <div className={`w-14 h-14 ${bgColor} rounded-lg flex items-center justify-center`}>
+        <div
+          className={`w-14 h-14 ${bgColor} rounded-lg flex items-center justify-center`}
+        >
           <Icon className={`text-2xl ${color}`} />
         </div>
       </div>
@@ -60,7 +62,9 @@ const Dashboard = () => {
     <Layout>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Tổng quan</h1>
-        <p className="text-gray-600">Tổng quan hệ thống FastFood Drone Delivery</p>
+        <p className="text-gray-600">
+          Tổng quan hệ thống FastFood Drone Delivery
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -129,11 +133,15 @@ const Dashboard = () => {
       {/* Additional Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Trạng thái Drone</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
+            Trạng thái Drone
+          </h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">IDLE</span>
-              <span className="font-semibold text-gray-800">{stats?.idleDrones || 0}</span>
+              <span className="font-semibold text-gray-800">
+                {stats?.idleDrones || 0}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">DISPATCHING</span>
@@ -155,7 +163,9 @@ const Dashboard = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Doanh thu theo nhà hàng</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
+            Doanh thu theo nhà hàng
+          </h3>
           <div className="text-center text-gray-500 py-8">
             Biểu đồ trống (mock data)
           </div>
