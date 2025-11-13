@@ -3,6 +3,7 @@ import {
   createEditShop,
   getMyShop,
   getShopByCity,
+  updateCategories,
 } from "../controllers/shop.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multer.js";
@@ -21,4 +22,5 @@ shopRouter.post(
 
 shopRouter.get("/get-my", isAuth, getMyShop);
 shopRouter.get("/get-by-city/:city", getShopByCity); // Bỏ isAuth để guest có thể xem
+shopRouter.put("/update-categories", isAuth, updateCategories);
 export default shopRouter;

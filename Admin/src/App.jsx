@@ -4,7 +4,9 @@ import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import ShopManagement from "./pages/ShopManagement";
+import ReportRevenue from "./pages/ReportRevenue";
 import useCheckAdminAuth from "./hooks/useCheckAdminAuth";
+import ToastContainer from "./components/ToastContainer";
 
 export const serverURL = "http://localhost:8000";
 
@@ -14,6 +16,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route
           path="/signin"
@@ -33,6 +36,12 @@ function App() {
           path="/shops"
           element={
             isAuthenticated ? <ShopManagement /> : <Navigate to="/signin" />
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            isAuthenticated ? <ReportRevenue /> : <Navigate to="/signin" />
           }
         />
       </Routes>

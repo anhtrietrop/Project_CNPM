@@ -2,23 +2,43 @@ import mongoose from "mongoose";
 
 const locationSchema = new mongoose.Schema(
   {
-    drone: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Drone",
-      required: true,
+    // Thông tin địa lý cơ bản
+    address: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    state: {
+      type: String,
     },
     latitude: {
-      type: mongoose.Schema.Types.Decimal128,
+      type: Number,
       required: true,
     },
     longitude: {
-      type: mongoose.Schema.Types.Decimal128,
+      type: Number,
       required: true,
     },
     altitude: {
-      type: mongoose.Schema.Types.Decimal128,
+      type: Number,
       default: 0,
     },
+    // Loại location (shop, delivery, drone)
+    type: {
+      type: String,
+      enum: ["shop", "delivery", "drone_tracking"],
+      required: true,
+    },
+    // Reference đến entity sử dụng location này
+    refModel: {
+      type: String,
+      enum: ["Shop", "Order", "Drone"],
+    },
+    refId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+    // Thông tin bổ sung cho drone tracking
     speed: {
       type: Number, // km/h
       default: 0,
@@ -31,10 +51,6 @@ const locationSchema = new mongoose.Schema(
       type: Number, // meters
       default: 0,
     },
-    recordedAt: {
-      type: Date,
-      default: Date.now,
-    },
     batteryLevel: {
       type: Number,
       min: 0,
@@ -45,12 +61,9 @@ const locationSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
-    weather: {
-      temperature: Number, // Celsius
-      humidity: Number, // Percentage
-      windSpeed: Number, // km/h
-      windDirection: Number, // degrees
-      visibility: Number, // km
+    // Ghi chú bổ sung
+    note: {
+      type: String,
     },
     isActive: {
       type: Boolean,
@@ -61,19 +74,13 @@ const locationSchema = new mongoose.Schema(
 );
 
 // Index để tìm kiếm nhanh
-locationSchema.index({ drone: 1, recordedAt: -1 });
-locationSchema.index({ recordedAt: -1 });
-locationSchema.index({ 
-  latitude: 1, 
-  longitude: 1, 
-  recordedAt: -1 
-});
+locationSchema.index({ refModel: 1, refId: 1 });
+locationSchema.index({ type: 1 });
+locationSchema.index({ latitude: 1, longitude: 1 });
+locationSchema.index({ city: 1 });
 
-// Compound index cho geospatial queries
-locationSchema.index({ 
-  "latitude": "2dsphere", 
-  "longitude": "2dsphere" 
-});
+// Geospatial index
+locationSchema.index({ latitude: "2dsphere", longitude: "2dsphere" });
 
 const Location = mongoose.model("Location", locationSchema);
 

@@ -14,16 +14,9 @@ const shopSchema = new mongoose.Schema(
       ref: "User",
       require: true,
     },
-    city: {
-      type: String,
-      require: true,
-    },
-    state: {
-      type: String,
-      require: true,
-    },
-    address: {
-      type: String,
+    location: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Location",
       require: true,
     },
     items: [

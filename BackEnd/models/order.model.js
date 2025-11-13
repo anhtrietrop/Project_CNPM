@@ -85,29 +85,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    deliveryAddress: {
-      address: {
-        type: String,
-        required: true,
-      },
-      city: {
-        type: String,
-        required: true,
-      },
-      coordinates: {
-        lat: {
-          type: Number,
-          required: true,
-        },
-        lng: {
-          type: Number,
-          required: true,
-        },
-      },
-      note: {
-        type: String,
-        default: "",
-      },
+    deliveryLocation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Location",
+      required: true,
     },
     contactInfo: {
       name: {

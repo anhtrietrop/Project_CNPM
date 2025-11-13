@@ -1,5 +1,6 @@
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import Shop from "../models/shop.model.js"; // ✅ thêm import model
+import Location from "../models/location.model.js";
 import fs from "fs";
 
 export const createEditShop = async (req, res) => {
@@ -9,6 +10,8 @@ export const createEditShop = async (req, res) => {
       city,
       state,
       address,
+      latitude,
+      longitude,
       categories,
       contactPhone,
       contactEmail,
@@ -55,12 +58,21 @@ export const createEditShop = async (req, res) => {
     let shop = await Shop.findOne({ owner: req.userId });
 
     if (!shop) {
+      // Tạo Location mới cho shop
+      const location = await Location.create({
+        address,
+        city,
+        state,
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+        type: "shop",
+        refModel: "Shop",
+      });
+
       // ✅ tạo shop mới - mặc định chờ duyệt
       const shopData = {
         name,
-        city,
-        state,
-        address,
+        location: location._id,
         owner: req.userId,
         isApproved: false, // Chờ admin duyệt
         categories: parsedCategories || [],
@@ -77,13 +89,23 @@ export const createEditShop = async (req, res) => {
       if (menuImagesUrls.length > 0) shopData.menuImages = menuImagesUrls;
 
       shop = await Shop.create(shopData);
+      
+      // Cập nhật refId cho location
+      location.refId = shop._id;
+      await location.save();
     } else {
+      // Cập nhật location
+      await Location.findByIdAndUpdate(shop.location, {
+        address,
+        city,
+        state,
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+      });
+
       // ✅ cập nhật shop cũ
       const updateData = {
         name,
-        city,
-        state,
-        address,
         contactPhone,
         contactEmail,
         representativeName,
@@ -101,7 +123,7 @@ export const createEditShop = async (req, res) => {
       shop = await Shop.findByIdAndUpdate(shop._id, updateData, { new: true });
     }
 
-    await shop.populate("owner items");
+    await shop.populate("owner items location");
     return res.status(201).json(shop);
   } catch (error) {
     console.error("Create/Edit shop error:", error); // ✅ log lỗi thật
@@ -115,6 +137,7 @@ export const getMyShop = async (req, res) => {
   try {
     const shop = await Shop.findOne({ owner: req.userId })
       .populate("owner")
+      .populate("location")
       .populate({
         path: "items",
         options: { sort: { updatedAt: -1 } },
@@ -132,23 +155,31 @@ export const getShopByCity = async (req, res) => {
   try {
     const { city } = req.params;
 
-    // Tìm kiếm linh hoạt cho Ho Chi Minh
-    let query = { isApproved: true }; // ✅ Chỉ lấy shop đã được duyệt
+    // Tìm locations theo city
+    let locationQuery = { type: "shop" };
     if (
       city.toLowerCase().includes("ho chi minh") ||
       city.toLowerCase().includes("hcm")
     ) {
-      // Tìm cả "Ho Chi Minh" và "Ho Chi Minh City"
-      query.$or = [
+      locationQuery.$or = [
         { city: { $regex: /ho chi minh/i } },
         { city: { $regex: /hcm/i } },
       ];
     } else {
-      // Tìm kiếm bình thường cho các thành phố khác
-      query.city = { $regex: new RegExp(city, "i") };
+      locationQuery.city = { $regex: new RegExp(city, "i") };
     }
 
-    const shops = await Shop.find(query).populate("items");
+    const locations = await Location.find(locationQuery);
+    const locationIds = locations.map((loc) => loc._id);
+
+    // Tìm shops với locations đó và đã được duyệt
+    const shops = await Shop.find({
+      location: { $in: locationIds },
+      isApproved: true,
+    })
+      .populate("items")
+      .populate("location");
+
     if (!shops || shops.length === 0) {
       return res.status(404).json({ message: "No shops found in this city" });
     }
@@ -159,3 +190,29 @@ export const getShopByCity = async (req, res) => {
       .json({ message: `get shop by city error  ${error}` });
   }
 };
+
+export const updateCategories = async (req, res) => {
+  try {
+    const { categories } = req.body;
+
+    if (!categories || !Array.isArray(categories)) {
+      return res.status(400).json({ message: "Categories must be an array" });
+    }
+
+    const shop = await Shop.findOne({ owner: req.userId });
+
+    if (!shop) {
+      return res.status(404).json({ message: "Shop not found" });
+    }
+
+    shop.categories = categories;
+    await shop.save();
+    await shop.populate("owner items");
+
+    return res.status(200).json({ message: "Categories updated successfully", shop });
+  } catch (error) {
+    console.error("Update categories error:", error);
+    return res.status(500).json({ message: `Update categories error: ${error.message}` });
+  }
+};
+

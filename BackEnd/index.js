@@ -15,6 +15,7 @@ import deliveryRouter from "./routes/delivery.routes.js";
 import droneRouter from "./routes/drone.routes.js";
 import locationRouter from "./routes/location.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import reportRouter from "./routes/report.routes.js";
 // Rating đã chuyển sang localStorage - không cần routes này nữa
 // import ratingRouter from "./routes/rating.routes.js";
 import cors from "cors";
@@ -44,6 +45,7 @@ app.use("/api/delivery", deliveryRouter);
 app.use("/api/drone", droneRouter);
 app.use("/api/location", locationRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/report", reportRouter);
 // Rating routes đã bị disable - dữ liệu lưu trong localStorage
 // app.use("/api/rating", ratingRouter);
 app.listen(PORT, () => {

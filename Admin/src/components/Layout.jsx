@@ -9,6 +9,7 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
+  FaChartLine,
 } from "react-icons/fa";
 
 const Layout = ({ children }) => {
@@ -22,6 +23,7 @@ const Layout = ({ children }) => {
     { path: "/", icon: FaTachometerAlt, label: "Tổng quan" },
     { path: "/users", icon: FaUsers, label: "Người dùng" },
     { path: "/shops", icon: FaStore, label: "Nhà hàng" },
+    { path: "/reports", icon: FaChartLine, label: "Báo cáo" },
   ];
 
   const handleLogout = () => {

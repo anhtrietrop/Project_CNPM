@@ -75,7 +75,7 @@ function FoodItemCard({ data }) {
           }`}
           onError={(e) => {
             console.error("Error loading food image:", data.image);
-            e.target.style.display = "none";
+            e.target.src = "https://via.placeholder.com/200x128?text=No+Image";
           }}
         />
 

@@ -15,12 +15,17 @@ import {
 import { IoIosNotifications } from "react-icons/io";
 import Loading from "./Loading.jsx";
 import { formatCurrency } from "../utils/formatCurrency.js";
+import { useToast } from "../hooks/useToast.jsx";
 
 const UserOrders = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const { orders, loading, error, refetchOrders } =
     useGetUserOrders(selectedStatus);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const toast = useToast();
 
   const statusOptions = [
     { value: "", label: "Tất cả", icon: FaShoppingBag, color: "gray" },
@@ -65,26 +70,27 @@ const UserOrders = () => {
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này?")) {
-      return;
-    }
+    setSelectedOrderId(orderId);
+    setShowCancelModal(true);
+  };
 
-    const reason = window.prompt("Lý do hủy đơn (tùy chọn):");
-
+  const confirmCancelOrder = async () => {
     try {
-      setCancellingOrderId(orderId);
+      setCancellingOrderId(selectedOrderId);
 
       await axios.put(
-        `${serverURL}/api/order/${orderId}/cancel`,
-        { reason: reason || "Cancelled by customer" },
+        `${serverURL}/api/order/${selectedOrderId}/cancel`,
+        { reason: cancelReason || "Cancelled by customer" },
         { withCredentials: true }
       );
 
-      alert("Hủy đơn hàng thành công!");
+      toast.success("Hủy đơn hàng thành công!");
+      setShowCancelModal(false);
+      setCancelReason("");
       refetchOrders();
     } catch (err) {
       console.error("Error cancelling order:", err);
-      alert(err.response?.data?.message || "Lỗi khi hủy đơn hàng!");
+      toast.error(err.response?.data?.message || "Lỗi khi hủy đơn hàng!");
     } finally {
       setCancellingOrderId(null);
     }
@@ -302,6 +308,51 @@ const UserOrders = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">
+              Hủy đơn hàng
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Bạn có chắc muốn hủy đơn hàng này không?
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lý do hủy đơn (tùy chọn):
+              </label>
+              <input
+                type="text"
+                placeholder="Nhập lý do hủy..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3399df]"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmCancelOrder}
+                disabled={cancellingOrderId}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {cancellingOrderId ? "Đang hủy..." : "Xác nhận hủy"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelReason("");
+                }}
+                disabled={cancellingOrderId}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

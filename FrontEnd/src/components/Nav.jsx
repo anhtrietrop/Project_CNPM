@@ -99,7 +99,7 @@ function Nav() {
             {myShopData && (
               <>
                 <button
-                  className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#3399df]/10 text-[#3399df]"
+                  className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#3399df]/10 text-[#3399df] hover:bg-[#3399df]/20 transition-colors"
                   onClick={() => navigation("/add-item")}
                 >
                   <FaPlus size={20} />

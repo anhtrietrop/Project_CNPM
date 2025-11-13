@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { FaUtensils } from "react-icons/fa";
+import { FaUtensils, FaPlus, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import { setMyShopData } from "../redux/ownerSlice";
 import { serverURL } from "../App.jsx";
@@ -20,6 +20,9 @@ function AddItem() {
   const dispatch = useDispatch();
   const [backendImage, setBackendImage] = useState(null);
   const [catetory, setCatetory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const toast = useToast();
 
   // Kiểm tra shop đã được duyệt chưa
@@ -35,17 +38,61 @@ function AddItem() {
       navigate("/");
       return;
     }
+
+    // Load categories from shop
+    if (myShopData.categories) {
+      setCategories(myShopData.categories);
+    } else {
+      setCategories([
+        "Burgers",
+        "Sandwiches",
+        "Fried",
+        "Desserts",
+        "Drinks",
+        "Tacos",
+        "Others",
+      ]);
+    }
   }, [myShopData, navigate, toast]);
 
-  const categories = myShopData?.categories || [
-    "Burgers",
-    "Sandwiches",
-    "Fried",
-    "Desserts",
-    "Drinks",
-    "Tacos",
-    "Others",
-  ];
+  const handleAddCategory = () => {
+    if (!newCategory.trim()) {
+      toast.error("Vui lòng nhập tên danh mục!");
+      return;
+    }
+
+    if (categories.includes(newCategory.trim())) {
+      toast.error("Danh muc nay da ton tai!");
+      return;
+    }
+
+    setCategories([...categories, newCategory.trim()]);
+    setNewCategory("");
+    toast.success("Đã thêm danh mục mới!");
+  };
+
+  const handleRemoveCategory = (categoryToRemove) => {
+    setCategories(categories.filter((cat) => cat !== categoryToRemove));
+    toast.info("Đã xóa danh mục!");
+  };
+
+  const handleSaveCategories = async () => {
+    try {
+      const result = await axios.put(
+        `${serverURL}/api/shop/update-categories`,
+        { categories },
+        {
+          withCredentials: true,
+        }
+      );
+      dispatch(setMyShopData(result.data.shop));
+      toast.success("Cập nhật danh mục thành công!");
+      setShowAddCategory(false);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "Lỗi khi cập nhật danh mục!");
+    }
+  };
   const handleImage = (e) => {
     const file = e.target.files[0];
     setBackendImage(file);
@@ -162,9 +209,90 @@ function AddItem() {
             ></input>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Danh mục
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Danh mục
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowAddCategory(!showAddCategory)}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              >
+                {showAddCategory ? (
+                  <>
+                    <FaTimes /> Đóng
+                  </>
+                ) : (
+                  <>
+                    <FaPlus /> Quản lý danh mục
+                  </>
+                )}
+              </button>
+            </div>
+
+            {showAddCategory && (
+              <div className="mb-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Thêm danh mục mới
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Tên danh mục..."
+                      className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddCategory();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCategory}
+                      className="bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                    >
+                      <FaPlus />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-600 mb-2">
+                    Danh mục hiện tại ({categories.length})
+                  </label>
+                  <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                    {categories.map((cat, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-white rounded border hover:bg-gray-50"
+                      >
+                        <span className="text-sm">{cat}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(cat)}
+                          className="text-red-500 hover:text-red-700 p-1"
+                        >
+                          <FaTimes size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveCategories}
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Lưu danh mục
+                </button>
+              </div>
+            )}
+
             <select
               type="number"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

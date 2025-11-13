@@ -62,19 +62,8 @@ const droneSchema = new mongoose.Schema(
       },
     },
     currentLocation: {
-      latitude: {
-        type: Number,
-      },
-      longitude: {
-        type: Number,
-      },
-      altitude: {
-        type: Number,
-      },
-      lastUpdated: {
-        type: Date,
-        default: Date.now,
-      },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Location",
     },
     maintenance: {
       lastService: {
@@ -117,7 +106,6 @@ const droneSchema = new mongoose.Schema(
 droneSchema.index({ shop: 1 });
 droneSchema.index({ status: 1 });
 droneSchema.index({ serialNumber: 1 });
-droneSchema.index({ "currentLocation.latitude": 1, "currentLocation.longitude": 1 });
 
 const Drone = mongoose.model("Drone", droneSchema);
 

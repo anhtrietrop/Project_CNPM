@@ -5,6 +5,7 @@ const adminSlice = createSlice({
   initialState: {
     adminData: null,
     isAuthenticated: false,
+    toasts: [],
   },
   reducers: {
     setAdminData: (state, action) => {
@@ -19,8 +20,14 @@ const adminSlice = createSlice({
       state.adminData = null;
       state.isAuthenticated = false;
     },
+    addToast: (state, action) => {
+      state.toasts.push(action.payload);
+    },
+    removeToast: (state, action) => {
+      state.toasts = state.toasts.filter((toast) => toast.id !== action.payload);
+    },
   },
 });
 
-export const { setAdminData, clearAdminData, logoutAdmin } = adminSlice.actions;
+export const { setAdminData, clearAdminData, logoutAdmin, addToast, removeToast } = adminSlice.actions;
 export default adminSlice.reducer;
