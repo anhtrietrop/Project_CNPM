@@ -250,8 +250,27 @@ const DroneManagement = () => {
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="bg-gradient-to-r from-[#3399df] to-blue-500 text-white px-4 py-3">
-                <h3 className="font-bold text-lg">{drone.model}</h3>
-                <p className="text-sm opacity-90">SN: {drone.serialNumber}</p>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg">{drone.model}</h3>
+                    <p className="text-sm opacity-90">SN: {drone.serialNumber}</p>
+                    <p className="text-xs opacity-75 font-mono mt-1">
+                      ID: {drone._id}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `Drone ID: ${drone._id}\nSerial: ${drone.serialNumber}`
+                      );
+                      alert("Đã copy thông tin drone!");
+                    }}
+                    className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors"
+                    title="Copy thông tin drone"
+                  >
+                    📋
+                  </button>
+                </div>
               </div>
 
               <div className="p-4">

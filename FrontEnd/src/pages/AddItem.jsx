@@ -90,7 +90,9 @@ function AddItem() {
       setShowAddCategory(false);
     } catch (error) {
       console.log(error);
-      toast.error(error.response?.data?.message || "Lỗi khi cập nhật danh mục!");
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật danh mục!"
+      );
     }
   };
   const handleImage = (e) => {

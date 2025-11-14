@@ -89,7 +89,7 @@ export const createEditShop = async (req, res) => {
       if (menuImagesUrls.length > 0) shopData.menuImages = menuImagesUrls;
 
       shop = await Shop.create(shopData);
-      
+
       // Cập nhật refId cho location
       location.refId = shop._id;
       await location.save();
@@ -209,10 +209,13 @@ export const updateCategories = async (req, res) => {
     await shop.save();
     await shop.populate("owner items");
 
-    return res.status(200).json({ message: "Categories updated successfully", shop });
+    return res
+      .status(200)
+      .json({ message: "Categories updated successfully", shop });
   } catch (error) {
     console.error("Update categories error:", error);
-    return res.status(500).json({ message: `Update categories error: ${error.message}` });
+    return res
+      .status(500)
+      .json({ message: `Update categories error: ${error.message}` });
   }
 };
-

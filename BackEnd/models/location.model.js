@@ -85,4 +85,3 @@ locationSchema.index({ latitude: "2dsphere", longitude: "2dsphere" });
 const Location = mongoose.model("Location", locationSchema);
 
 export default Location;
-

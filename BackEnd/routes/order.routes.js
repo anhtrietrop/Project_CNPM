@@ -11,10 +11,15 @@ import {
   getAvailableDrones,
   assignDroneToOrder,
   updateDroneBattery,
+  verifyConfirmCode,
+  getOrderByDroneId,
 } from "../controllers/order.controllers.js";
 import isAuth from "../middlewares/isAuth.js";
 
 const router = express.Router();
+
+// Public route - Get order by drone ID (for DroneSimulator)
+router.get("/drone/:droneId", getOrderByDroneId);
 
 // Tất cả routes đều cần authentication
 router.use(isAuth);
@@ -38,6 +43,9 @@ router.get("/:orderId", getOrderById);
 
 // Hủy đơn hàng
 router.put("/:orderId/cancel", cancelOrder);
+
+// Verify confirmation code and complete order
+router.post("/:orderId/verify-code", verifyConfirmCode);
 
 // Cập nhật trạng thái đơn hàng (cho shop owner/admin)
 router.put("/:orderId/status", updateOrderStatus);

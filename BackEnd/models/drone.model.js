@@ -110,4 +110,3 @@ droneSchema.index({ serialNumber: 1 });
 const Drone = mongoose.model("Drone", droneSchema);
 
 export default Drone;
-

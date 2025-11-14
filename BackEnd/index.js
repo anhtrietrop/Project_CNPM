@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
+import { createServer } from "http";
+import { Server } from "socket.io";
 import connectDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes.js";
@@ -19,15 +21,24 @@ import reportRouter from "./routes/report.routes.js";
 // Rating đã chuyển sang localStorage - không cần routes này nữa
 // import ratingRouter from "./routes/rating.routes.js";
 import cors from "cors";
+
 const app = express();
-const PORT = process.env.PORT || 5000;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: true, // Allow all origins for development
+    credentials: true,
+  },
+});
+
+const PORT = process.env.PORT || 8000;
+
+// Make io accessible to routes
+app.set("io", io);
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-    ],
+    origin: true, // Allow all origins for development
     credentials: true,
   })
 );
@@ -48,7 +59,41 @@ app.use("/api/admin", adminRouter);
 app.use("/api/report", reportRouter);
 // Rating routes đã bị disable - dữ liệu lưu trong localStorage
 // app.use("/api/rating", ratingRouter);
-app.listen(PORT, () => {
+
+// Socket.io connection handling
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+
+  // Join room for specific order tracking
+  socket.on("join-order", (orderId) => {
+    socket.join(`order-${orderId}`);
+    console.log(`Socket ${socket.id} joined order-${orderId}`);
+  });
+
+  // Leave order room
+  socket.on("leave-order", (orderId) => {
+    socket.leave(`order-${orderId}`);
+    console.log(`Socket ${socket.id} left order-${orderId}`);
+  });
+
+  // Drone location update from simulator
+  socket.on("drone-location-update", (data) => {
+    const { orderId, location } = data;
+    // Broadcast to all clients tracking this order
+    io.to(`order-${orderId}`).emit("drone-location", {
+      orderId,
+      location,
+      timestamp: new Date(),
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+});
+
+httpServer.listen(PORT, () => {
   connectDB();
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Socket.io server ready`);
 });

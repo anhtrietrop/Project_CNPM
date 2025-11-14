@@ -24,7 +24,7 @@ const ReportRevenue = () => {
     const today = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    
+
     setEndDate(today.toISOString().split("T")[0]);
     setStartDate(thirtyDaysAgo.toISOString().split("T")[0]);
   }, []);

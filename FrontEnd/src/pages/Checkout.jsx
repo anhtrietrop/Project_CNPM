@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import {
@@ -54,17 +54,43 @@ function FlyToLocation({ position }) {
 }
 
 // Component để handle click trên map
-function LocationMarker({ position, setPosition, isConfirmed }) {
+function LocationMarker({ position, setPosition, isConfirmed, onDragEnd }) {
+  const markerRef = useRef(null);
+
   useMapEvents({
     click(e) {
       if (!isConfirmed) {
         setPosition(e.latlng);
+        if (onDragEnd) {
+          onDragEnd(e.latlng);
+        }
       }
     },
   });
 
+  const eventHandlers = useMemo(
+    () => ({
+      dragend() {
+        const marker = markerRef.current;
+        if (marker != null) {
+          const newPos = marker.getLatLng();
+          setPosition(newPos);
+          if (onDragEnd) {
+            onDragEnd(newPos);
+          }
+        }
+      },
+    }),
+    [setPosition, onDragEnd]
+  );
+
   return position === null ? null : (
-    <Marker position={position} draggable={!isConfirmed}>
+    <Marker
+      position={position}
+      draggable={!isConfirmed}
+      eventHandlers={eventHandlers}
+      ref={markerRef}
+    >
       <Popup>
         {isConfirmed
           ? "✓ Địa chỉ đã xác nhận"
@@ -492,6 +518,9 @@ const Checkout = () => {
                 position={mapPosition}
                 setPosition={setMapPosition}
                 isConfirmed={isLocationConfirmed}
+                onDragEnd={(newPos) => {
+                  getAddressFromCoordinates(newPos.lat, newPos.lng);
+                }}
               />
             </MapContainer>
           </div>

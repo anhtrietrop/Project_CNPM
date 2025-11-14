@@ -24,10 +24,18 @@ const adminSlice = createSlice({
       state.toasts.push(action.payload);
     },
     removeToast: (state, action) => {
-      state.toasts = state.toasts.filter((toast) => toast.id !== action.payload);
+      state.toasts = state.toasts.filter(
+        (toast) => toast.id !== action.payload
+      );
     },
   },
 });
 
-export const { setAdminData, clearAdminData, logoutAdmin, addToast, removeToast } = adminSlice.actions;
+export const {
+  setAdminData,
+  clearAdminData,
+  logoutAdmin,
+  addToast,
+  removeToast,
+} = adminSlice.actions;
 export default adminSlice.reducer;

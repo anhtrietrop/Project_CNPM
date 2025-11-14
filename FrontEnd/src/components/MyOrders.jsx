@@ -22,6 +22,7 @@ import {
 } from "react-icons/fa";
 import Loading from "./Loading.jsx";
 import { formatCurrency } from "../utils/formatCurrency.js";
+import DroneTrackingMap from "./DroneTrackingMap.jsx";
 
 const MyOrders = () => {
   const toast = useToast();
@@ -393,40 +394,56 @@ const MyOrders = () => {
 
                     {/* Drone Battery Info - Hiển thị khi đang delivering */}
                     {order.orderStatus === "delivering" && order.drone && (
-                      <div className="mb-4 bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">
-                              {getBatteryIcon(
-                                order.droneBatteryPercentage || 100
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-gray-800">
-                                Pin Drone
-                              </h4>
-                              <p
-                                className={`text-lg font-bold ${
-                                  order.droneBatteryPercentage >= 70
-                                    ? "text-green-600"
-                                    : order.droneBatteryPercentage >= 30
-                                    ? "text-yellow-600"
-                                    : "text-red-600"
-                                }`}
-                              >
-                                {order.droneBatteryPercentage || 100}%
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleOpenBatteryModal(order)}
-                            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                          >
-                            <FaEdit />
-                            Cập nhật Pin
-                          </button>
+                      <>
+                        {/* Drone Tracking Map */}
+                        <div className="mb-4">
+                          <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            <FaTruck className="text-blue-600" />
+                            Theo dõi vị trí Drone
+                          </h4>
+                          <DroneTrackingMap
+                            orderId={order._id}
+                            deliveryAddress={order.deliveryAddress}
+                            shopCoordinates={order.orderItems[0]?.shopId?.coordinates}
+                          />
                         </div>
-                      </div>
+
+                        {/* Battery Info */}
+                        <div className="mb-4 bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="text-2xl">
+                                {getBatteryIcon(
+                                  order.droneBatteryPercentage || 100
+                                )}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-gray-800">
+                                  Pin Drone
+                                </h4>
+                                <p
+                                  className={`text-lg font-bold ${
+                                    order.droneBatteryPercentage >= 70
+                                      ? "text-green-600"
+                                      : order.droneBatteryPercentage >= 30
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
+                                  }`}
+                                >
+                                  {order.droneBatteryPercentage || 100}%
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleOpenBatteryModal(order)}
+                              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                            >
+                              <FaEdit />
+                              Cập nhật Pin
+                            </button>
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     {/* Order Items - Chỉ hiển thị items của shop này */}
@@ -508,7 +525,9 @@ const MyOrders = () => {
                         <span className="text-gray-600">
                           Phương thức thanh toán:{" "}
                         </span>
-                        <span className="font-medium text-gray-800">VNPay</span>
+                        <span className="font-medium text-gray-800">
+                          {order.payment?.paymentMethod === "vnpay" ? "VNPay" : "Tiền mặt"}
+                        </span>
                       </div>
                       <div>
                         <span className="text-gray-600">
@@ -516,16 +535,16 @@ const MyOrders = () => {
                         </span>
                         <span
                           className={`font-medium ${
-                            order.paymentStatus === "paid"
+                            order.payment?.status === "success"
                               ? "text-green-600"
-                              : order.paymentStatus === "failed"
+                              : order.payment?.status === "failed"
                               ? "text-red-600"
                               : "text-yellow-600"
                           }`}
                         >
-                          {order.paymentStatus === "paid"
+                          {order.payment?.status === "success"
                             ? "Đã thanh toán"
-                            : order.paymentStatus === "failed"
+                            : order.payment?.status === "failed"
                             ? "Thất bại"
                             : "Chờ thanh toán"}
                         </span>

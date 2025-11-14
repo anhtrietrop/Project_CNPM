@@ -326,7 +326,8 @@ const ShopManagement = () => {
               {/* Thông tin liên hệ */}
               <div className="border-t pt-6">
                 <h4 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center justify-center gap-3">
-                  <FaPhoneAlt className="text-blue-500 text-xl" /> Thông tin liên hệ
+                  <FaPhoneAlt className="text-blue-500 text-xl" /> Thông tin
+                  liên hệ
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg max-w-3xl mx-auto">
                   <div className="flex items-center gap-3">
@@ -383,8 +384,8 @@ const ShopManagement = () => {
               {/* Tài khoản ngân hàng */}
               <div className="border-t pt-6">
                 <h4 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center justify-center gap-3">
-                  <FaCreditCard className="text-green-500 text-xl" /> Tài khoản ngân
-                  hàng
+                  <FaCreditCard className="text-green-500 text-xl" /> Tài khoản
+                  ngân hàng
                 </h4>
                 <div className="text-lg space-y-3 max-w-3xl mx-auto text-center">
                   <p>
@@ -448,7 +449,9 @@ const ShopManagement = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-lg text-gray-500 text-center">Chưa có ảnh menu</p>
+                  <p className="text-lg text-gray-500 text-center">
+                    Chưa có ảnh menu
+                  </p>
                 )}
               </div>
 

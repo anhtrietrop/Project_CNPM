@@ -81,7 +81,7 @@ export const createOrder = async (req, res) => {
     const estimatedDeliveryTime = new Date();
     estimatedDeliveryTime.setMinutes(estimatedDeliveryTime.getMinutes() + 35);
 
-    // Tạo order với embedded documents
+    // Tạo order với embedded deliveryAddress
     const order = await Order.create({
       user: req.userId,
       orderItems: orderItems,
@@ -458,6 +458,22 @@ export const getAvailableDrones = async (req, res) => {
 };
 
 // Assign drone cho order và chuyển sang delivering
+// Helper function: Calculate distance using Haversine formula
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of Earth in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  return distance; // in kilometers
+};
+
 export const assignDroneToOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -487,7 +503,7 @@ export const assignDroneToOrder = async (req, res) => {
     }
 
     // Kiểm tra drone
-    const drone = await Drone.findById(droneId);
+    const drone = await Drone.findById(droneId).populate("shop");
     if (!drone) {
       return res.status(404).json({ message: "Drone not found" });
     }
@@ -496,10 +512,26 @@ export const assignDroneToOrder = async (req, res) => {
       return res.status(400).json({ message: "Drone is not available" });
     }
 
+    // Calculate distance from shop to delivery address
+    let deliveryDistance = 0;
+    if (drone.shop && drone.shop.coordinates && order.deliveryAddress?.coordinates) {
+      deliveryDistance = calculateDistance(
+        drone.shop.coordinates.lat,
+        drone.shop.coordinates.lng,
+        order.deliveryAddress.coordinates.lat,
+        order.deliveryAddress.coordinates.lng
+      );
+    }
+
     // Cập nhật order và drone
+    // Generate 6-digit confirmation code
+    const confirmCode = Math.floor(100000 + Math.random() * 900000).toString();
+
     order.drone = droneId;
     order.droneBatteryPercentage = drone.battery?.current || 100;
     order.orderStatus = "delivering";
+    order.confirmCode = confirmCode;
+    order.deliveryDistance = deliveryDistance;
     await order.save();
 
     // Cập nhật trạng thái drone
@@ -507,10 +539,27 @@ export const assignDroneToOrder = async (req, res) => {
     drone.flightStats.totalFlights += 1;
     await drone.save();
 
+    // Emit Socket.io event to notify DroneSimulator
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("drone-assigned", {
+        droneId: droneId,
+        orderId: orderId,
+        confirmCode: confirmCode,
+        deliveryDistance: deliveryDistance,
+        deliveryAddress: order.deliveryAddress,
+        shopAddress: drone.shop?.address || "Unknown",
+        shopCoordinates: drone.shop?.coordinates,
+      });
+      console.log(`Emitted drone-assigned event for drone ${droneId}, order ${orderId}`);
+    }
+
     return res.status(200).json({
       message: "Drone assigned successfully and order is now delivering",
       order,
       drone,
+      confirmCode,
+      deliveryDistance: deliveryDistance.toFixed(2) + " km",
     });
   } catch (error) {
     console.error("Assign drone to order error:", error);
@@ -597,6 +646,98 @@ export const updateDroneBattery = async (req, res) => {
     console.error("Update drone battery error:", error);
     return res.status(500).json({
       message: `Update drone battery error: ${error.message}`,
+    });
+  }
+};
+
+// Get order by drone ID (for DroneSimulator to fetch active order)
+export const getOrderByDroneId = async (req, res) => {
+  try {
+    const { droneId } = req.params;
+
+    // Find order with this drone that is currently delivering
+    const order = await Order.findOne({
+      drone: droneId,
+      orderStatus: "delivering",
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "No active order found for this drone",
+        order: null,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Order found",
+      order,
+    });
+  } catch (error) {
+    console.error("Get order by drone ID error:", error);
+    return res.status(500).json({
+      message: `Get order by drone ID error: ${error.message}`,
+    });
+  }
+};
+
+// Verify confirmation code and complete order
+export const verifyConfirmCode = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { confirmCode } = req.body;
+
+    if (!confirmCode) {
+      return res.status(400).json({ message: "Confirmation code is required" });
+    }
+
+    // Find order
+    const order = await Order.findOne({
+      _id: orderId,
+      user: req.userId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found or you don't have permission",
+      });
+    }
+
+    // Check if order is delivering
+    if (order.orderStatus !== "delivering") {
+      return res.status(400).json({
+        message: "Order is not in delivering status",
+      });
+    }
+
+    // Verify code
+    if (order.confirmCode !== confirmCode) {
+      return res.status(400).json({
+        message: "Invalid confirmation code",
+      });
+    }
+
+    // Update order to completed
+    order.orderStatus = "completed";
+    order.deliveredAt = new Date();
+    await order.save();
+
+    // Update drone status back to available
+    if (order.drone) {
+      const drone = await Drone.findById(order.drone);
+      if (drone) {
+        drone.status = "available";
+        await drone.save();
+      }
+    }
+
+    return res.status(200).json({
+      message: "Order completed successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Verify confirm code error:", error);
+    return res.status(500).json({
+      message: `Verify confirm code error: ${error.message}`,
     });
   }
 };

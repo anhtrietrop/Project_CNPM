@@ -14,6 +14,9 @@ import isAuth from "../middlewares/isAuth.js";
 
 const router = express.Router();
 
+// Public route - Verify drone by ID and serial (for DroneSimulator)
+router.get("/verify/:droneId", getDroneById);
+
 // Tất cả routes đều cần authentication
 router.use(isAuth);
 

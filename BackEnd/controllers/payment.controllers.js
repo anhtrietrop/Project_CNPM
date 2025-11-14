@@ -143,12 +143,14 @@ export const vnpayReturn = async (req, res) => {
       // Thanh toán thành công
       console.log(`✅ Payment successful for order: ${orderId}`);
 
+      let savedPayment;
       if (payment) {
         payment.status = "success";
         payment.transactionId = transactionNo;
         payment.bankCode = bankCode;
         payment.payDate = payDate;
         await payment.save();
+        savedPayment = payment;
         console.log(`💾 Payment updated: ${payment._id} - Status: success`);
       } else {
         console.error(
@@ -165,16 +167,17 @@ export const vnpayReturn = async (req, res) => {
           bankCode: bankCode,
           payDate: payDate,
         });
+        savedPayment = newPayment;
         console.log(`💾 New payment created: ${newPayment._id}`);
       }
 
       // CẬP NHẬT ORDER
-      order.payment = payment._id; // ✅ Lưu reference đến payment
+      order.payment = savedPayment._id; // ✅ Lưu reference đến payment
       order.orderStatus = "confirmed"; // Chuyển sang confirmed
       await order.save();
 
       console.log(
-        `Order updated: ${orderId} - Status: confirmed, Payment: ${payment._id}`
+        `Order updated: ${orderId} - Status: confirmed, Payment: ${savedPayment._id}`
       );
 
       // ✅ TRỪ SỐ LƯỢNG SẢN PHẨM trong kho

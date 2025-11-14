@@ -121,7 +121,9 @@ export const getRevenueByPeriod = async (req, res) => {
         break;
       case "day":
       default:
-        groupFormat = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
+        groupFormat = {
+          $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+        };
         break;
     }
 
@@ -137,7 +139,9 @@ export const getRevenueByPeriod = async (req, res) => {
       },
       {
         $match: {
-          "orderItems.shopId": shopId ? mongoose.Types.ObjectId(shopId) : { $exists: true },
+          "orderItems.shopId": shopId
+            ? mongoose.Types.ObjectId(shopId)
+            : { $exists: true },
         },
       },
       {

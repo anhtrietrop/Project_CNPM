@@ -16,6 +16,7 @@ import { IoIosNotifications } from "react-icons/io";
 import Loading from "./Loading.jsx";
 import { formatCurrency } from "../utils/formatCurrency.js";
 import { useToast } from "../hooks/useToast.jsx";
+import DroneTrackingMap from "./DroneTrackingMap.jsx";
 
 const UserOrders = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
@@ -25,6 +26,9 @@ const UserOrders = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [showConfirmCodeModal, setShowConfirmCodeModal] = useState(false);
+  const [confirmCode, setConfirmCode] = useState("");
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const toast = useToast();
 
   const statusOptions = [
@@ -93,6 +97,38 @@ const UserOrders = () => {
       toast.error(err.response?.data?.message || "Lỗi khi hủy đơn hàng!");
     } finally {
       setCancellingOrderId(null);
+    }
+  };
+
+  const handleOpenConfirmCodeModal = (orderId) => {
+    setSelectedOrderId(orderId);
+    setConfirmCode("");
+    setShowConfirmCodeModal(true);
+  };
+
+  const handleVerifyConfirmCode = async () => {
+    if (!confirmCode || confirmCode.length !== 6) {
+      toast.error("Vui lòng nhập mã xác nhận 6 chữ số");
+      return;
+    }
+
+    setVerifyingCode(true);
+    try {
+      await axios.post(
+        `${serverURL}/api/order/${selectedOrderId}/verify-code`,
+        { confirmCode },
+        { withCredentials: true }
+      );
+
+      toast.success("Xác nhận giao hàng thành công! Cảm ơn bạn đã đặt hàng!");
+      setShowConfirmCodeModal(false);
+      setConfirmCode("");
+      refetchOrders();
+    } catch (err) {
+      console.error("Error verifying code:", err);
+      toast.error(err.response?.data?.message || "Mã xác nhận không đúng!");
+    } finally {
+      setVerifyingCode(false);
     }
   };
 
@@ -213,6 +249,29 @@ const UserOrders = () => {
                   </div>
                 </div>
 
+                {/* Drone Tracking Map - Show when order is delivering */}
+                {order.orderStatus === "delivering" && order.drone && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                      <FaTruck className="text-purple-600" />
+                      Theo dõi vị trí Drone
+                    </h4>
+                    <DroneTrackingMap
+                      orderId={order._id}
+                      deliveryAddress={order.deliveryAddress}
+                      shopCoordinates={order.orderItems[0]?.shopId?.coordinates}
+                    />
+                    {order.deliveryDistance && (
+                      <div className="mt-2 bg-purple-50 p-3 rounded-lg">
+                        <p className="text-sm text-purple-700">
+                          <span className="font-semibold">Khoảng cách giao hàng:</span>{" "}
+                          {order.deliveryDistance.toFixed(2)} km
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Order Items */}
                 <div className="mb-4">
                   <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
@@ -260,6 +319,7 @@ const UserOrders = () => {
                   </div>
                 </div>
 
+                {/* Action Buttons */}
                 {/* Cancel Button - Only show for pending orders */}
                 {order.orderStatus === "pending" && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
@@ -276,13 +336,28 @@ const UserOrders = () => {
                   </div>
                 )}
 
+                {/* Confirm Delivery Button - Only show for delivering orders */}
+                {order.orderStatus === "delivering" && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => handleOpenConfirmCodeModal(order._id)}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FaCheckCircle />
+                      Xác nhận đã nhận hàng
+                    </button>
+                  </div>
+                )}
+
                 {/* Payment Info */}
                 <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center text-sm">
                   <div>
                     <span className="text-gray-600">
                       Phương thức thanh toán:{" "}
                     </span>
-                    <span className="font-medium text-gray-800">VNPay</span>
+                    <span className="font-medium text-gray-800">
+                      {order.payment?.paymentMethod === "vnpay" ? "VNPay" : "Tiền mặt"}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">
@@ -290,16 +365,16 @@ const UserOrders = () => {
                     </span>
                     <span
                       className={`font-medium ${
-                        order.paymentStatus === "paid"
+                        order.payment?.status === "success"
                           ? "text-green-600"
-                          : order.paymentStatus === "failed"
+                          : order.payment?.status === "failed"
                           ? "text-red-600"
                           : "text-yellow-600"
                       }`}
                     >
-                      {order.paymentStatus === "paid"
+                      {order.payment?.status === "success"
                         ? "Đã thanh toán"
-                        : order.paymentStatus === "failed"
+                        : order.payment?.status === "failed"
                         ? "Thất bại"
                         : "Chờ thanh toán"}
                     </span>
@@ -350,6 +425,56 @@ const UserOrders = () => {
                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Code Modal */}
+      {showConfirmCodeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FaCheckCircle className="text-green-500" />
+              Xác nhận đã nhận hàng
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Vui lòng nhập mã xác nhận 6 chữ số mà người giao hàng cung cấp:
+            </p>
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="Nhập mã 6 chữ số"
+                value={confirmCode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setConfirmCode(value);
+                }}
+                maxLength={6}
+                className="w-full px-4 py-3 text-center text-2xl font-bold tracking-widest border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Mã xác nhận được hiển thị trên thiết bị của người giao hàng
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleVerifyConfirmCode}
+                disabled={verifyingCode || confirmCode.length !== 6}
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {verifyingCode ? "Đang xác nhận..." : "Xác nhận"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowConfirmCodeModal(false);
+                  setConfirmCode("");
+                }}
+                disabled={verifyingCode}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                Hủy
               </button>
             </div>
           </div>
