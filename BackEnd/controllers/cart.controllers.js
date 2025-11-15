@@ -72,7 +72,10 @@ export const addToCart = async (req, res) => {
     }
 
     // Kiểm tra item có tồn tại không và lấy thông tin shop
-    const item = await Item.findById(itemId).populate("shop");
+    const item = await Item.findById(itemId).populate({
+      path: "shop",
+      populate: { path: "location" }
+    });
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
     }
@@ -117,6 +120,22 @@ export const addToCart = async (req, res) => {
       });
     }
 
+    // Kiểm tra xem giỏ hàng đã có sản phẩm từ shop khác chưa
+    if (cart.cartItems.length > 0) {
+      const existingShopId = cart.cartItems[0].shopId.toString();
+      const newShopId = item.shop._id.toString();
+      
+      if (existingShopId !== newShopId) {
+        const existingShopName = cart.cartItems[0].shopName;
+        return res.status(400).json({ 
+          message: `Giỏ hàng đang có sản phẩm từ "${existingShopName}". Vui lòng thanh toán hoặc xóa giỏ hàng trước khi thêm sản phẩm từ nhà hàng khác.`,
+          needClearCart: true,
+          currentShop: existingShopName,
+          newShop: item.shop.name
+        });
+      }
+    }
+
     // Kiểm tra item đã có trong cart chưa
     const existingItemIndex = cart.cartItems.findIndex(
       (cartItem) => cartItem.itemId.toString() === itemId.toString()
@@ -145,12 +164,12 @@ export const addToCart = async (req, res) => {
           itemFoodType: item.foodType || "Unknown",
           price: item.price || 0,
           subtotal: (item.price || 0) * quantity,
-          // Embedded shop data
+          // Embedded shop data - Ưu tiên lấy từ location
           shopId: item.shop._id,
           shopName: item.shop.name || "Unknown Shop",
-          shopCity: item.shop.city || "Unknown City",
-          shopState: item.shop.state || "Unknown State",
-          shopAddress: item.shop.address || "Unknown Address",
+          shopCity: item.shop.location?.city || item.shop.city || "Unknown City",
+          shopState: item.shop.location?.state || item.shop.state || "Unknown State",
+          shopAddress: item.shop.location?.address || item.shop.address || "Unknown Address",
         };
 
         console.log("New cart item:", newCartItem);

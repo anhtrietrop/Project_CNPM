@@ -7,14 +7,14 @@ import useCart from "../hooks/useCart.jsx";
 import { formatCurrency } from "../utils/formatCurrency.js";
 
 function FoodItemCard({ data }) {
-  const { addItemToCart } = useCart();
+  const { addItemToCart, clearCart } = useCart();
   const toast = useToast();
   const navigate = useNavigate();
   const { userData } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(false);
   const isOutOfStock = data.stock === 0;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (isOutOfStock) return;
 
     // Kiểm tra đăng nhập
@@ -29,13 +29,31 @@ function FoodItemCard({ data }) {
     try {
       setLoading(true);
       // Truyền full item data vào cart
-      addItemToCart(data, 1);
+      await addItemToCart(data, 1);
 
       // Hiển thị toast thành công
       toast.success(`Đã thêm "${data.name}" vào giỏ hàng`, 2000);
     } catch (error) {
       console.error("Error adding to cart:", error);
-      toast.error("Lỗi khi thêm vào giỏ hàng!");
+      
+      // Kiểm tra lỗi từ backend về việc giỏ hàng đã có sản phẩm từ shop khác
+      if (error.response?.data?.needClearCart) {
+        const { newShop, message } = error.response.data;
+        
+        if (window.confirm(
+          `${message}\n\nBạn có muốn xóa giỏ hàng hiện tại và thêm sản phẩm từ "${newShop}" không?`
+        )) {
+          try {
+            await clearCart();
+            await addItemToCart(data, 1);
+            toast.success(`Đã thêm "${data.name}" vào giỏ hàng`, 2000);
+          } catch {
+            toast.error("Lỗi khi xóa giỏ hàng!");
+          }
+        }
+      } else {
+        toast.error(error.response?.data?.message || "Lỗi khi thêm vào giỏ hàng!");
+      }
     } finally {
       setLoading(false);
     }
