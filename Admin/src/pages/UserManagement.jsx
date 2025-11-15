@@ -135,6 +135,9 @@ const UserManagement = () => {
                 Vai trò
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ngày tạo
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -146,7 +149,7 @@ const UserManagement = () => {
             {loading ? (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   Đang tải...
@@ -155,7 +158,7 @@ const UserManagement = () => {
             ) : users.length === 0 ? (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   Không tìm thấy người dùng
@@ -190,11 +193,17 @@ const UserManagement = () => {
                     >
                       {user.role}
                     </span>
-                    {user.isBlocked && (
-                      <span className="ml-2 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        Đã khóa
-                      </span>
-                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.isBlocked
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {user.isBlocked ? "Đã khóa" : "Hoạt động"}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(user.createdAt).toLocaleDateString("vi-VN")}

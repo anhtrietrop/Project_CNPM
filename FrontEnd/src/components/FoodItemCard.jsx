@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaPlus, FaMinus, FaStar } from "react-icons/fa";
+import { FaPlus, FaMinus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useToast } from "../hooks/useToast";
@@ -41,23 +41,6 @@ function FoodItemCard({ data }) {
     }
   };
 
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < 5; i++) {
-      if (i < fullStars) {
-        stars.push(<FaStar key={i} className="text-yellow-400" />);
-      } else if (i === fullStars && hasHalfStar) {
-        stars.push(<FaStar key={i} className="text-yellow-400 opacity-50" />);
-      } else {
-        stars.push(<FaStar key={i} className="text-gray-300" />);
-      }
-    }
-    return stars;
-  };
-
   // Bỏ hiển thị số lượng ở ngoài
 
   return (
@@ -87,13 +70,7 @@ function FoodItemCard({ data }) {
         )}
       </div>
 
-      {/* Rating display */}
-      {data.rating > 0 && (
-        <div className="absolute top-2 right-2 bg-white bg-opacity-90 px-2 py-1 rounded-full flex items-center gap-1">
-          <FaStar className="text-yellow-400 text-xs" />
-          <span className="text-xs font-medium">{data.rating}</span>
-        </div>
-      )}
+
 
       {/* Food type indicator - TẮT */}
       {/* <div className="absolute top-2 left-2">
@@ -114,16 +91,8 @@ function FoodItemCard({ data }) {
             {data.name}
           </div>
           <div className="text-xs text-gray-600 mb-1">{data.category}</div>
-          <div className="text-xs text-gray-500 mb-1">
+          <div className="text-xs text-gray-500 mb-2">
             {data.shopName || data.shop?.name || "Unknown Shop"}
-          </div>
-
-          {/* Rating stars */}
-          <div className="flex items-center gap-1 mb-2">
-            <div className="flex">{renderStars(data.rating || 0)}</div>
-            <span className="text-xs text-gray-500">
-              ({data.ratingCount || 0})
-            </span>
           </div>
         </div>
 
