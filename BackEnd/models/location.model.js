@@ -79,9 +79,6 @@ locationSchema.index({ type: 1 });
 locationSchema.index({ latitude: 1, longitude: 1 });
 locationSchema.index({ city: 1 });
 
-// Geospatial index
-locationSchema.index({ latitude: "2dsphere", longitude: "2dsphere" });
-
 const Location = mongoose.model("Location", locationSchema);
 
 export default Location;

@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "owner", "deliveryBoy"],
       required: true,
     },
+    isBlocked: { type: Boolean, default: false },
     resetOtp: { type: String },
     otpExpiries: { type: Date },
     isOtpVerified: { type: Boolean, default: false },

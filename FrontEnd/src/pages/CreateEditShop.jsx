@@ -55,6 +55,31 @@ function CreateEditShop() {
   const [menuPreviews, setMenuPreviews] = useState(
     myShopData?.menuImages || []
   );
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
+
+  const getLocation = () => {
+    setGettingLocation(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+          setGettingLocation(false);
+          toast.success("Đã lấy vị trí GPS thành công!");
+        },
+        (error) => {
+          console.error(error);
+          setGettingLocation(false);
+          toast.error("Không thể lấy vị trí. Vui lòng bật GPS!");
+        }
+      );
+    } else {
+      setGettingLocation(false);
+      toast.error("Trình duyệt không hỗ trợ GPS!");
+    }
+  };
 
   const handleAddCategory = () => {
     if (newCategory.trim() && !categories.includes(newCategory.trim())) {
@@ -118,6 +143,10 @@ function CreateEditShop() {
       toast.error("Vui lòng nhập tên chủ tài khoản");
       return;
     }
+    if (!latitude || !longitude) {
+      toast.error("Vui lòng lấy vị trí GPS của nhà hàng!");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -126,6 +155,8 @@ function CreateEditShop() {
       formData.append("city", city);
       formData.append("state", state);
       formData.append("address", address);
+      formData.append("latitude", latitude);
+      formData.append("longitude", longitude);
       formData.append("categories", JSON.stringify(categories));
 
       // Thông tin mới
@@ -258,6 +289,32 @@ function CreateEditShop() {
               onChange={(e) => setAddress(e.target.value)}
               value={address}
             ></input>
+          </div>
+
+          {/* VỊ TRÍ GPS */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Vị trí GPS nhà hàng <span className="text-red-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={getLocation}
+                disabled={gettingLocation}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 text-sm font-medium"
+              >
+                {gettingLocation ? "Đang lấy..." : "Lấy vị trí GPS"}
+              </button>
+            </div>
+            {latitude && longitude ? (
+              <div className="text-sm text-green-600 font-medium">
+                ✓ Đã lấy GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </div>
+            ) : (
+              <div className="text-sm text-gray-600">
+                Chưa có tọa độ GPS. Vui lòng bấm "Lấy vị trí GPS"
+              </div>
+            )}
           </div>
 
           {/* ========== THÔNG TIN BỔ SUNG ========== */}

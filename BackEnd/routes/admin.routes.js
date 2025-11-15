@@ -3,6 +3,7 @@ import {
   getDashboardStats,
   getAllUsers,
   deleteUser,
+  toggleBlockUser,
   getAllShops,
   approveShop,
   rejectShop,
@@ -20,6 +21,7 @@ router.get("/stats", getDashboardStats);
 
 // Users
 router.get("/users", getAllUsers);
+router.put("/users/:userId/toggle-block", toggleBlockUser);
 router.delete("/users/:userId", deleteUser);
 
 // Shops

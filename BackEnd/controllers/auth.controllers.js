@@ -59,6 +59,12 @@ export const signIn = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "User does not exists" });
     }
+
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({ message: "Tài khoản bị khóa. Vui lòng liên hệ admin." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Incorrect password" });

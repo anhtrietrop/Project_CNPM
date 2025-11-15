@@ -142,6 +142,44 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// Block/Unblock user
+export const toggleBlockUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy người dùng",
+      });
+    }
+
+    // Don't allow blocking admin
+    if (user.role === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Không thể khóa tài khoản admin",
+      });
+    }
+
+    user.isBlocked = !user.isBlocked;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: user.isBlocked ? "Khóa tài khoản thành công" : "Mở khóa tài khoản thành công",
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
 // Get all shops
 export const getAllShops = async (req, res) => {
   try {

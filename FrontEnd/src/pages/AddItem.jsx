@@ -55,7 +55,7 @@ function AddItem() {
     }
   }, [myShopData, navigate, toast]);
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategory.trim()) {
       toast.error("Vui lòng nhập tên danh mục!");
       return;
@@ -66,35 +66,58 @@ function AddItem() {
       return;
     }
 
-    setCategories([...categories, newCategory.trim()]);
+    const updatedCategories = [...categories, newCategory.trim()];
+    setCategories(updatedCategories);
     setNewCategory("");
-    toast.success("Đã thêm danh mục mới!");
-  };
 
-  const handleRemoveCategory = (categoryToRemove) => {
-    setCategories(categories.filter((cat) => cat !== categoryToRemove));
-    toast.info("Đã xóa danh mục!");
-  };
-
-  const handleSaveCategories = async () => {
+    // Lưu vào database ngay lập tức
     try {
       const result = await axios.put(
         `${serverURL}/api/shop/update-categories`,
-        { categories },
+        { categories: updatedCategories },
         {
           withCredentials: true,
         }
       );
       dispatch(setMyShopData(result.data.shop));
-      toast.success("Cập nhật danh mục thành công!");
-      setShowAddCategory(false);
+      toast.success("Đã thêm danh mục mới!");
     } catch (error) {
       console.log(error);
+      // Rollback nếu lỗi
+      setCategories(categories);
       toast.error(
-        error.response?.data?.message || "Lỗi khi cập nhật danh mục!"
+        error.response?.data?.message || "Lỗi khi thêm danh mục!"
       );
     }
   };
+
+  const handleRemoveCategory = async (categoryToRemove) => {
+    const updatedCategories = categories.filter(
+      (cat) => cat !== categoryToRemove
+    );
+    setCategories(updatedCategories);
+
+    // Lưu vào database ngay lập tức
+    try {
+      const result = await axios.put(
+        `${serverURL}/api/shop/update-categories`,
+        { categories: updatedCategories },
+        {
+          withCredentials: true,
+        }
+      );
+      dispatch(setMyShopData(result.data.shop));
+      toast.success("Đã xóa danh mục!");
+    } catch (error) {
+      console.log(error);
+      // Rollback nếu lỗi
+      setCategories(categories);
+      toast.error(
+        error.response?.data?.message || "Lỗi khi xóa danh mục!"
+      );
+    }
+  };
+
   const handleImage = (e) => {
     const file = e.target.files[0];
     setBackendImage(file);
@@ -284,14 +307,6 @@ function AddItem() {
                     ))}
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleSaveCategories}
-                  className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-                >
-                  Lưu danh mục
-                </button>
               </div>
             )}
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import axios from "axios";
 import { serverURL } from "../App";
-import { FaUsers, FaTrash, FaSearch } from "react-icons/fa";
+import { FaUsers, FaTrash, FaSearch, FaLock, FaLockOpen } from "react-icons/fa";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -40,6 +40,23 @@ const UserManagement = () => {
       fetchUsers();
     } catch (error) {
       alert(error.response?.data?.message || "Lỗi khi xóa người dùng");
+    }
+  };
+
+  const handleToggleBlock = async (userId, isBlocked) => {
+    const action = isBlocked ? "mở khóa" : "khóa";
+    if (!window.confirm(`Bạn có chắc muốn ${action} tài khoản này?`)) return;
+
+    try {
+      const response = await axios.put(
+        `${serverURL}/api/admin/users/${userId}/toggle-block`,
+        {},
+        { withCredentials: true }
+      );
+      alert(response.data.message);
+      fetchUsers();
+    } catch (error) {
+      alert(error.response?.data?.message || `Lỗi khi ${action} tài khoản`);
     }
   };
 
@@ -173,18 +190,37 @@ const UserManagement = () => {
                     >
                       {user.role}
                     </span>
+                    {user.isBlocked && (
+                      <span className="ml-2 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        Đã khóa
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {user.role !== "admin" && (
-                      <button
-                        onClick={() => handleDelete(user._id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <FaTrash />
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleToggleBlock(user._id, user.isBlocked)}
+                          className={`${
+                            user.isBlocked
+                              ? "text-green-600 hover:text-green-900"
+                              : "text-yellow-600 hover:text-yellow-900"
+                          }`}
+                          title={user.isBlocked ? "Mở khóa" : "Khóa tài khoản"}
+                        >
+                          {user.isBlocked ? <FaLockOpen /> : <FaLock />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user._id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Xóa người dùng"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
